@@ -1,10 +1,6 @@
--- ============================================
--- University Lost & Found Management Platform
--- Database Schema
--- Created: January 15, 2026
--- ============================================
+-- University Lost & Found Database Schema
 
--- Drop tables if exist (in reverse order of dependencies)
+-- Drop tables if exist
 DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS reports;
 DROP TABLE IF EXISTS claims;
@@ -13,9 +9,7 @@ DROP TABLE IF EXISTS locations;
 DROP TABLE IF EXISTS categories;
 DROP TABLE IF EXISTS users;
 
--- ============================================
--- TABLE: users
--- ============================================
+-- Users table
 CREATE TABLE users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(100) NOT NULL,
@@ -32,9 +26,7 @@ CREATE TABLE users (
     INDEX idx_status (account_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================
--- TABLE: categories
--- ============================================
+-- Categories table
 CREATE TABLE categories (
     category_id INT AUTO_INCREMENT PRIMARY KEY,
     category_name VARCHAR(100) NOT NULL UNIQUE,
@@ -44,9 +36,7 @@ CREATE TABLE categories (
     INDEX idx_active (is_active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================
--- TABLE: locations
--- ============================================
+-- Locations table
 CREATE TABLE locations (
     location_id INT AUTO_INCREMENT PRIMARY KEY,
     location_name VARCHAR(100) NOT NULL UNIQUE,
@@ -56,9 +46,7 @@ CREATE TABLE locations (
     INDEX idx_active (is_active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================
--- TABLE: items
--- ============================================
+-- Items table
 CREATE TABLE items (
     item_id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(200) NOT NULL,
@@ -66,7 +54,7 @@ CREATE TABLE items (
     item_type ENUM('LOST', 'FOUND') NOT NULL,
     category_id INT NOT NULL,
     location_id INT NOT NULL,
-    event_date DATE NOT NULL COMMENT 'Date when item was lost or found',
+    event_date DATE NOT NULL,
     image_path VARCHAR(255) NULL,
     current_status ENUM('OPEN', 'CLAIM_PENDING', 'APPROVED', 'RETURNED', 'CLOSED', 'HIDDEN') NOT NULL DEFAULT 'OPEN',
     posted_by INT NOT NULL,
@@ -87,18 +75,16 @@ CREATE TABLE items (
     INDEX idx_location (location_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================
--- TABLE: claims
--- ============================================
+-- Claims table
 CREATE TABLE claims (
     claim_id INT AUTO_INCREMENT PRIMARY KEY,
     item_id INT NOT NULL,
     claimed_by INT NOT NULL,
-    proof_answer_1 TEXT NOT NULL COMMENT 'Answer to: Describe unique features',
-    proof_answer_2 TEXT NOT NULL COMMENT 'Answer to: Where and when did you lose it',
-    proof_image_path VARCHAR(255) NULL COMMENT 'Optional proof image (receipt, photo, etc.)',
+    proof_answer_1 TEXT NOT NULL,
+    proof_answer_2 TEXT NOT NULL,
+    proof_image_path VARCHAR(255) NULL,
     claim_status ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
-    admin_note TEXT NULL COMMENT 'Admin review notes',
+    admin_note TEXT NULL,
     reviewed_by INT NULL,
     reviewed_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -112,14 +98,10 @@ CREATE TABLE claims (
     INDEX idx_item (item_id),
     INDEX idx_claimant (claimed_by),
     INDEX idx_created_at (created_at),
-    
-    -- Prevent duplicate claims from same user on same item
     UNIQUE KEY unique_claim (item_id, claimed_by)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================
--- TABLE: notifications
--- ============================================
+-- Notifications table
 CREATE TABLE notifications (
     notification_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -139,9 +121,7 @@ CREATE TABLE notifications (
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================
--- TABLE: reports
--- ============================================
+-- Reports table
 CREATE TABLE reports (
     report_id INT AUTO_INCREMENT PRIMARY KEY,
     item_id INT NOT NULL,
@@ -163,7 +143,3 @@ CREATE TABLE reports (
     INDEX idx_reporter (reported_by),
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ============================================
--- Schema creation complete
--- ============================================
