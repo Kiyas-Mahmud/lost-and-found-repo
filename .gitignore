@@ -4,6 +4,10 @@ uploads/
 # Configuration files (may contain sensitive data)
 config/db.php
 
+# Test and setup files
+test_models.php
+setup.php
+
 # Documentation files
 *.md
 
