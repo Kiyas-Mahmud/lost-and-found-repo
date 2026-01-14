@@ -1,14 +1,8 @@
 <?php
-/**
- * Claim Model
- * Handles all claim-related database operations
- */
-
 class Claim {
     private $conn;
     private $table = 'claims';
 
-    // Claim properties
     public $claim_id;
     public $item_id;
     public $claimed_by;
@@ -22,17 +16,11 @@ class Claim {
     public $created_at;
     public $updated_at;
 
-    /**
-     * Constructor with database connection
-     */
     public function __construct($db) {
         $this->conn = $db;
     }
 
-    /**
-     * Create new claim
-     * @return bool
-     */
+    // Create new claim
     public function create() {
         $query = "INSERT INTO {$this->table} 
                   (item_id, claimed_by, proof_answer_1, proof_answer_2, proof_image_path, claim_status) 
@@ -59,11 +47,7 @@ class Claim {
         return false;
     }
 
-    /**
-     * Get claim by ID with related data
-     * @param int $id
-     * @return object|null
-     */
+    // Get claim by ID with related data
     public function getById($id) {
         $query = "SELECT c.*, 
                          i.title as item_title, 
@@ -96,13 +80,7 @@ class Claim {
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Get all claims with filters
-     * @param array $filters
-     * @param int $limit
-     * @param int $offset
-     * @return array
-     */
+    // Get all claims with filters
     public function getAll($filters = [], $limit = 10, $offset = 0) {
         $query = "SELECT c.*, 
                          i.title as item_title, 
@@ -148,11 +126,7 @@ class Claim {
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Get total count with filters
-     * @param array $filters
-     * @return int
-     */
+    // Get total count with filters
     public function getCount($filters = []) {
         $query = "SELECT COUNT(*) as total 
                   FROM {$this->table} c
@@ -186,12 +160,7 @@ class Claim {
         return $row['total'];
     }
 
-    /**
-     * Check if user already claimed this item
-     * @param int $item_id
-     * @param int $user_id
-     * @return bool
-     */
+    // Check if user already claimed this item
     public function hasUserClaimed($item_id, $user_id) {
         $query = "SELECT claim_id FROM {$this->table} 
                   WHERE item_id = :item_id AND claimed_by = :user_id 
@@ -205,13 +174,7 @@ class Claim {
         return $stmt->rowCount() > 0;
     }
 
-    /**
-     * Update claim status (approve/reject)
-     * @param string $status
-     * @param int $reviewer_id
-     * @param string $admin_note
-     * @return bool
-     */
+    // Update claim status (approve/reject)
     public function updateStatus($status, $reviewer_id, $admin_note = null) {
         $query = "UPDATE {$this->table} 
                   SET claim_status = :status, 
@@ -229,10 +192,7 @@ class Claim {
         return $stmt->execute();
     }
 
-    /**
-     * Delete claim
-     * @return bool
-     */
+    // Delete claim
     public function delete() {
         $query = "DELETE FROM {$this->table} WHERE claim_id = :claim_id";
         $stmt = $this->conn->prepare($query);
@@ -241,11 +201,7 @@ class Claim {
         return $stmt->execute();
     }
 
-    /**
-     * Get claims by item ID
-     * @param int $item_id
-     * @return array
-     */
+    // Get claims by item ID
     public function getByItemId($item_id) {
         $query = "SELECT c.*, u.full_name as claimant_name, u.email as claimant_email
                   FROM {$this->table} c

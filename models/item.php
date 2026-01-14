@@ -1,14 +1,8 @@
 <?php
-/**
- * Item Model
- * Handles all item-related database operations
- */
-
 class Item {
     private $conn;
     private $table = 'items';
 
-    // Item properties
     public $item_id;
     public $title;
     public $description;
@@ -22,17 +16,11 @@ class Item {
     public $created_at;
     public $updated_at;
 
-    /**
-     * Constructor with database connection
-     */
     public function __construct($db) {
         $this->conn = $db;
     }
 
-    /**
-     * Create new item
-     * @return bool
-     */
+    // Create new item
     public function create() {
         $query = "INSERT INTO {$this->table} 
                   (title, description, item_type, category_id, location_id, event_date, image_path, current_status, posted_by) 
@@ -62,11 +50,7 @@ class Item {
         return false;
     }
 
-    /**
-     * Get item by ID with related data (category, location, user)
-     * @param int $id
-     * @return object|null
-     */
+    // Get item by ID with related data
     public function getById($id) {
         $query = "SELECT i.*, 
                          c.category_name, 
@@ -87,13 +71,7 @@ class Item {
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Get all items with filters and pagination
-     * @param array $filters
-     * @param int $limit
-     * @param int $offset
-     * @return array
-     */
+    // Get all items with filters and pagination
     public function getAll($filters = [], $limit = 12, $offset = 0) {
         $query = "SELECT i.*, 
                          c.category_name, 
@@ -161,11 +139,7 @@ class Item {
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Get total count with filters
-     * @param array $filters
-     * @return int
-     */
+    // Get total count with filters
     public function getCount($filters = []) {
         $query = "SELECT COUNT(*) as total FROM {$this->table} WHERE 1=1";
 
@@ -218,10 +192,7 @@ class Item {
         return $row['total'];
     }
 
-    /**
-     * Update item
-     * @return bool
-     */
+    // Update item
     public function update() {
         $query = "UPDATE {$this->table} 
                   SET title = :title, 
@@ -257,11 +228,7 @@ class Item {
         return $stmt->execute();
     }
 
-    /**
-     * Update item status
-     * @param string $status
-     * @return bool
-     */
+    // Update item status
     public function updateStatus($status) {
         $query = "UPDATE {$this->table} SET current_status = :status WHERE item_id = :item_id";
         $stmt = $this->conn->prepare($query);
@@ -271,10 +238,7 @@ class Item {
         return $stmt->execute();
     }
 
-    /**
-     * Delete item
-     * @return bool
-     */
+    // Delete item
     public function delete() {
         $query = "DELETE FROM {$this->table} WHERE item_id = :item_id";
         $stmt = $this->conn->prepare($query);
@@ -283,10 +247,7 @@ class Item {
         return $stmt->execute();
     }
 
-    /**
-     * Get statistics
-     * @return array
-     */
+    // Get statistics
     public function getStats() {
         $query = "SELECT 
                     COUNT(*) as total_items,

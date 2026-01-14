@@ -1,8 +1,5 @@
 <?php
-/**
- * Report Model
- * Handles all report-related database operations
- */
+// Report Model - Handles report operations
 
 class Report {
     private $conn;
@@ -20,17 +17,12 @@ class Report {
     public $resolved_at;
     public $created_at;
 
-    /**
-     * Constructor with database connection
-     */
+    // Constructor with database connection
     public function __construct($db) {
         $this->conn = $db;
     }
 
-    /**
-     * Create new report
-     * @return bool
-     */
+    // Create new report
     public function create() {
         $query = "INSERT INTO {$this->table} 
                   (item_id, reported_by, reason, comment, report_status) 
@@ -55,11 +47,7 @@ class Report {
         return false;
     }
 
-    /**
-     * Get report by ID with related data
-     * @param int $id
-     * @return object|null
-     */
+    // Get report by ID with related data
     public function getById($id) {
         $query = "SELECT r.*, 
                          i.title as item_title, 
@@ -83,13 +71,7 @@ class Report {
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Get all reports with filters
-     * @param array $filters
-     * @param int $limit
-     * @param int $offset
-     * @return array
-     */
+    // Get all reports with filters
     public function getAll($filters = [], $limit = 20, $offset = 0) {
         $query = "SELECT r.*, 
                          i.title as item_title, 
@@ -136,11 +118,7 @@ class Report {
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Get total count with filters
-     * @param array $filters
-     * @return int
-     */
+    // Get total count with filters
     public function getCount($filters = []) {
         $query = "SELECT COUNT(*) as total FROM {$this->table} WHERE 1=1";
 
@@ -171,12 +149,7 @@ class Report {
         return $row['total'];
     }
 
-    /**
-     * Check if user already reported this item
-     * @param int $item_id
-     * @param int $user_id
-     * @return bool
-     */
+    // Check if user already reported this item
     public function hasUserReported($item_id, $user_id) {
         $query = "SELECT report_id FROM {$this->table} 
                   WHERE item_id = :item_id AND reported_by = :user_id 
@@ -190,12 +163,7 @@ class Report {
         return $stmt->rowCount() > 0;
     }
 
-    /**
-     * Update report status to resolved
-     * @param int $resolver_id
-     * @param string $admin_note
-     * @return bool
-     */
+    // Update report status to resolved
     public function markAsResolved($resolver_id, $admin_note = null) {
         $query = "UPDATE {$this->table} 
                   SET report_status = 'RESOLVED', 
@@ -212,10 +180,7 @@ class Report {
         return $stmt->execute();
     }
 
-    /**
-     * Delete report
-     * @return bool
-     */
+    // Delete report
     public function delete() {
         $query = "DELETE FROM {$this->table} WHERE report_id = :report_id";
         $stmt = $this->conn->prepare($query);
@@ -224,11 +189,7 @@ class Report {
         return $stmt->execute();
     }
 
-    /**
-     * Get reports by item ID
-     * @param int $item_id
-     * @return array
-     */
+    // Get reports by item ID
     public function getByItemId($item_id) {
         $query = "SELECT r.*, u.full_name as reporter_name, u.email as reporter_email
                   FROM {$this->table} r

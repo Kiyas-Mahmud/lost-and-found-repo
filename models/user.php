@@ -1,14 +1,8 @@
 <?php
-/**
- * User Model
- * Handles all user-related database operations
- */
-
 class User {
     private $conn;
     private $table = 'users';
 
-    // User properties
     public $user_id;
     public $full_name;
     public $email;
@@ -20,17 +14,11 @@ class User {
     public $created_at;
     public $updated_at;
 
-    /**
-     * Constructor with database connection
-     */
     public function __construct($db) {
         $this->conn = $db;
     }
 
-    /**
-     * Create new user
-     * @return bool
-     */
+    // Create new user
     public function create() {
         $query = "INSERT INTO {$this->table} 
                   (full_name, email, student_id, phone, password_hash, role, account_status) 
@@ -60,11 +48,7 @@ class User {
         return false;
     }
 
-    /**
-     * Get user by ID
-     * @param int $id
-     * @return object|null
-     */
+    // Get user by ID
     public function getById($id) {
         $query = "SELECT * FROM {$this->table} WHERE user_id = :user_id LIMIT 1";
         $stmt = $this->conn->prepare($query);
@@ -74,11 +58,7 @@ class User {
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Get user by email
-     * @param string $email
-     * @return object|null
-     */
+    // Get user by email
     public function getByEmail($email) {
         $query = "SELECT * FROM {$this->table} WHERE email = :email LIMIT 1";
         $stmt = $this->conn->prepare($query);
@@ -88,11 +68,7 @@ class User {
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Check if email exists
-     * @param string $email
-     * @return bool
-     */
+    // Check if email exists
     public function emailExists($email) {
         $query = "SELECT user_id FROM {$this->table} WHERE email = :email LIMIT 1";
         $stmt = $this->conn->prepare($query);
@@ -102,10 +78,7 @@ class User {
         return $stmt->rowCount() > 0;
     }
 
-    /**
-     * Update user profile
-     * @return bool
-     */
+    // Update user profile
     public function update() {
         $query = "UPDATE {$this->table} 
                   SET full_name = :full_name, 
@@ -129,11 +102,7 @@ class User {
         return $stmt->execute();
     }
 
-    /**
-     * Update password
-     * @param string $new_password_hash
-     * @return bool
-     */
+    // Update password
     public function updatePassword($new_password_hash) {
         $query = "UPDATE {$this->table} SET password_hash = :password_hash WHERE user_id = :user_id";
         $stmt = $this->conn->prepare($query);
@@ -143,11 +112,7 @@ class User {
         return $stmt->execute();
     }
 
-    /**
-     * Update account status
-     * @param string $status (ACTIVE, INACTIVE, SUSPENDED)
-     * @return bool
-     */
+    // Update account status (ACTIVE, INACTIVE, SUSPENDED)
     public function updateStatus($status) {
         $query = "UPDATE {$this->table} SET account_status = :status WHERE user_id = :user_id";
         $stmt = $this->conn->prepare($query);
@@ -157,12 +122,7 @@ class User {
         return $stmt->execute();
     }
 
-    /**
-     * Get all users with optional filters
-     * @param string $role (optional)
-     * @param string $status (optional)
-     * @return array
-     */
+    // Get all users with optional filters
     public function getAll($role = null, $status = null) {
         $query = "SELECT * FROM {$this->table} WHERE 1=1";
         
@@ -188,10 +148,7 @@ class User {
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Delete user
-     * @return bool
-     */
+    // Delete user
     public function delete() {
         $query = "DELETE FROM {$this->table} WHERE user_id = :user_id";
         $stmt = $this->conn->prepare($query);
@@ -200,11 +157,7 @@ class User {
         return $stmt->execute();
     }
 
-    /**
-     * Get total users count
-     * @param string $role (optional)
-     * @return int
-     */
+    // Get total users count
     public function getCount($role = null) {
         $query = "SELECT COUNT(*) as total FROM {$this->table}";
         if ($role) {
