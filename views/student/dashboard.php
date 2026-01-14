@@ -1,10 +1,10 @@
 <?php
-require_once '../config/session.php';
+require_once '../../config/session.php';
 requireLogin();
 
 // Only allow students
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'STUDENT') {
-    header('Location: ../views/login.php');
+    header('Location: ../login.php');
     exit;
 }
 
@@ -16,7 +16,7 @@ $userName = $_SESSION['full_name'] ?? 'Student';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard - Lost & Found</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
     <div class="dashboard-container">
@@ -29,7 +29,7 @@ $userName = $_SESSION['full_name'] ?? 'Student';
                 <a href="browse.php" class="nav-link">Browse Items</a>
                 <a href="my-items.php" class="nav-link">My Items</a>
                 <a href="my-claims.php" class="nav-link">My Claims</a>
-                <a href="../logout.php" class="nav-link">Logout</a>
+                <a href="../../logout.php" class="nav-link">Logout</a>
             </div>
         </nav>
 

@@ -7,6 +7,9 @@ config/db.php
 # Test and setup files
 test_models.php
 setup.php
+fix_admin_password.php
+generate_hash.php
+admin/test_admin.php
 
 # Documentation files
 *.md

@@ -2,7 +2,7 @@
 
 -- Default Admin User (admin@university.edu / Admin@123)
 INSERT INTO users (full_name, email, student_id, phone, password_hash, role, account_status) VALUES
-('System Administrator', 'admin@university.edu', NULL, '1234567890', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ADMIN', 'ACTIVE');
+('System Administrator', 'admin@university.edu', NULL, '1234567890', '$2y$10$al630AZRuMEL8SNIVvSJ6OrZTE4vyuk7/6881/8K8RHgALKdGfDDu', 'ADMIN', 'ACTIVE');
 
 -- Test Student Users (Password: Student@123)
 INSERT INTO users (full_name, email, student_id, phone, password_hash, role, account_status) VALUES

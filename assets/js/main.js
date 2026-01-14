@@ -309,3 +309,54 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// Admin Sidebar Toggle
+function toggleSidebar() {
+    const sidebar = document.getElementById('adminSidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    
+    if (sidebar) {
+        sidebar.classList.toggle('active');
+        sidebar.classList.toggle('collapsed');
+    }
+}
+
+// Close modal
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+// Open modal
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('active');
+    }
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('modal-overlay')) {
+        e.target.classList.remove('active');
+    }
+});
+
+// Admin Header Scroll Effect
+let lastScroll = 0;
+window.addEventListener('scroll', function() {
+    const adminHeader = document.querySelector('.admin-header');
+    if (adminHeader) {
+        const currentScroll = window.pageYOffset;
+        
+        if (currentScroll > 10) {
+            adminHeader.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.08)';
+        } else {
+            adminHeader.style.boxShadow = '0 2px 12px rgba(0, 0, 0, 0.04)';
+        }
+        
+        lastScroll = currentScroll;
+    }
+});
