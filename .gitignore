@@ -10,6 +10,7 @@ setup.php
 fix_admin_password.php
 generate_hash.php
 admin/test_admin.php
+create_sample_images.php
 
 # Documentation files
 *.md

@@ -20,7 +20,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <span class="sidebar-text">Dashboard</span>
         </a>
         
-        <a href="pending_claims.php" class="sidebar-link <?php echo ($currentPage == 'pending_claims.php') ? 'active' : ''; ?>">
+        <a href="pending-claims.php" class="sidebar-link <?php echo ($currentPage == 'pending-claims.php') ? 'active' : ''; ?>">
             <span class="sidebar-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"/>
