@@ -1,50 +1,23 @@
 <?php
-require_once __DIR__ . '/../config/db.php';
-require_once __DIR__ . '/../config/session.php';
-require_once __DIR__ . '/../models/user.php';
+// Load authentication controller
+require_once __DIR__ . '/../controllers/auth.php';
 
 $error = '';
 $registered = isset($_GET['registered']) ? true : false;
 
+// Handle login form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $login = trim($_POST['login']); // Can be email or student_id
-    $password = $_POST['password'];
+    $controller = new AuthController();
+    $result = $controller->login(
+        trim($_POST['login']),
+        $_POST['password']
+    );
     
-    if (empty($login) || empty($password)) {
-        $error = 'All fields are required';
+    if ($result['success']) {
+        header('Location: ' . $result['redirect']);
+        exit();
     } else {
-        $db = get_db_connection();
-        $user = new User($db);
-        
-        // Check if login is email or student ID
-        if (filter_var($login, FILTER_VALIDATE_EMAIL)) {
-            $userData = $user->getByEmail($login);
-        } else {
-            $userData = $user->getByStudentId($login);
-        }
-        
-        if ($userData && password_verify($password, $userData->password_hash)) {
-            // Check if account is active
-            if ($userData->account_status !== 'ACTIVE') {
-                $error = 'Your account is ' . strtolower($userData->account_status);
-            } else {
-                // Set session
-                $_SESSION['user_id'] = $userData->user_id;
-                $_SESSION['role'] = $userData->role;
-                $_SESSION['full_name'] = $userData->full_name;
-                $_SESSION['email'] = $userData->email;
-                
-                // Redirect based on role
-                if ($userData->role === 'ADMIN') {
-                    header('Location: admin/dashboard.php');
-                } else {
-                    header('Location: student/dashboard.php');
-                }
-                exit();
-            }
-        } else {
-            $error = 'Invalid email/student ID or password';
-        }
+        $error = $result['message'];
     }
 }
 ?>

@@ -1,38 +1,26 @@
 <?php
-require_once __DIR__ . '/../config/db.php';
-require_once __DIR__ . '/../models/user.php';
+// Load authentication controller
+require_once __DIR__ . '/../controllers/auth.php';
 
 $error = '';
 $success = '';
 
+// Handle registration form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $full_name = trim($_POST['full_name']);
-    $email = trim($_POST['email']);
-    $student_id = trim($_POST['student_id']);
-    $phone = trim($_POST['phone']);
-    $password = $_POST['password'];
-    $confirm_password = $_POST['confirm_password'];
+    $controller = new AuthController();
+    $result = $controller->register(
+        trim($_POST['full_name']),
+        trim($_POST['email']),
+        trim($_POST['student_id']),
+        trim($_POST['phone']),
+        $_POST['password'],
+        $_POST['confirm_password']
+    );
     
-    if (empty($full_name) || empty($email) || empty($student_id) || empty($phone) || empty($password)) {
-        $error = 'All fields are required';
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = 'Invalid email format';
-    } elseif (!preg_match('/^01[0-9]{9}$/', $phone)) {
-        $error = 'Phone number must be 11 digits starting with 01';
-    } elseif (strlen($password) < 6) {
-        $error = 'Password must be at least 6 characters';
-    } elseif ($password !== $confirm_password) {
-        $error = 'Passwords do not match';
+    if ($result['success']) {
+        $success = $result['message'];
     } else {
-        $db = get_db_connection();
-        $user = new User($db);
-        $result = $user->register($full_name, $email, $student_id, $phone, $password);
-        
-        if ($result['success']) {
-            $success = $result['message'];
-        } else {
-            $error = $result['message'];
-        }
+        $error = $result['message'];
     }
 }
 ?>

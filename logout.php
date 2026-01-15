@@ -1,6 +1,9 @@
 <?php
-session_start();
-session_unset();
-session_destroy();
-header('Location: views/login.php');
+// Load authentication controller
+require_once __DIR__ . '/controllers/auth.php';
+
+$controller = new AuthController();
+$result = $controller->logout();
+
+header('Location: views/' . $result['redirect']);
 exit;
