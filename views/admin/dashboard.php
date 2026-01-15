@@ -1,46 +1,17 @@
 <?php
-require_once '../../config/session.php';
-require_once '../../config/db.php';
-requireAdmin();
+// Load controller
+require_once '../../controllers/admin/dashboard.php';
 
 $pageTitle = 'Dashboard';
 
-// Get statistics
-$db = get_db_connection();
-
-// Total Users
-$stmt = $db->query("SELECT COUNT(*) as count FROM users WHERE role = 'STUDENT'");
-$totalUsers = $stmt->fetch(PDO::FETCH_OBJ)->count;
-
-// Total Posts
-$stmt = $db->query("SELECT COUNT(*) as count FROM items");
-$totalPosts = $stmt->fetch(PDO::FETCH_OBJ)->count;
-
-// Pending Claims
-$stmt = $db->query("SELECT COUNT(*) as count FROM claims WHERE claim_status = 'PENDING'");
-$pendingClaims = $stmt->fetch(PDO::FETCH_OBJ)->count;
-
-// Open Reports
-$stmt = $db->query("SELECT COUNT(*) as count FROM reports WHERE report_status = 'OPEN'");
-$openReports = $stmt->fetch(PDO::FETCH_OBJ)->count;
-
-// Hidden Posts
-$stmt = $db->query("SELECT COUNT(*) as count FROM items WHERE current_status = 'HIDDEN'");
-$hiddenPosts = $stmt->fetch(PDO::FETCH_OBJ)->count;
-
-// Today's Activity
-$stmt = $db->query("SELECT COUNT(*) as count FROM items WHERE DATE(created_at) = CURDATE()");
-$todayActivity = $stmt->fetch(PDO::FETCH_OBJ)->count;
-
-// Recent Activity (last 10)
-$recentActivity = $db->query("
-    SELECT 'post' as type, i.title as description, i.created_at as activity_time, 
-           CONCAT(u.full_name, ' posted an item') as activity_text
-    FROM items i
-    JOIN users u ON i.posted_by = u.user_id
-    ORDER BY i.created_at DESC
-    LIMIT 10
-")->fetchAll(PDO::FETCH_OBJ);
+// Get all dashboard data from controller
+$totalUsers = $dashboardData['totalUsers'];
+$totalPosts = $dashboardData['activePosts'];
+$pendingClaims = $dashboardData['pendingClaims'];
+$openReports = $dashboardData['openReports'];
+$hiddenPosts = $dashboardData['hiddenPosts'];
+$todayActivity = $dashboardData['todayActivity'];
+$recentActivity = $dashboardData['recentActivity'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -111,7 +82,7 @@ $recentActivity = $db->query("
                         <h3 class="section-title">Quick Actions</h3>
                     </div>
                     <div class="quick-actions-grid">
-                        <a href="pending_claims.php" class="quick-action-card">
+                        <a href="pending-claims.php" class="quick-action-card">
                             <div class="quick-action-icon pending">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <circle cx="12" cy="12" r="10"/>
