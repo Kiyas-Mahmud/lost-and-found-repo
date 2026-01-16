@@ -163,6 +163,45 @@
   font-size: 14px;
 }
 
+.form-group label .required {
+  color: #ff6b6b;
+  margin-left: 2px;
+  font-weight: 700;
+}
+
+.error-message {
+  display: none;
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.error-message:not(:empty) {
+  display: block;
+}
+
+.success-message {
+  display: none;
+  color: #10b981;
+  font-size: 12px;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.success-message:not(:empty) {
+  display: block;
+}
+
+.input-error {
+  border-color: #ef4444 !important;
+  background: #fef2f2 !important;
+}
+
+.input-error:focus {
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important;
+}
+
 .form-group input,
 .form-group select,
 .form-group textarea {
@@ -353,7 +392,7 @@
 .toast {
   position: fixed;
   top: 20px;
-  right: 20px;
+  right: -400px;
   min-width: 300px;
   max-width: 400px;
   padding: 16px 20px;
@@ -365,8 +404,17 @@
   align-items: center;
   gap: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  animation: slideIn 0.3s ease-out;
+  transition: right 0.3s ease-out;
   z-index: 9999;
+}
+
+.toast.show {
+  right: 20px;
+}
+
+.toast i {
+  flex-shrink: 0;
+  font-size: 18px;
 }
 
 .toast svg {
@@ -403,6 +451,28 @@
     transform: translateX(400px);
     opacity: 0;
   }
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.loading-spinner i {
+  font-size: 48px;
+  color: var(--accent-primary);
+  margin-bottom: 16px;
+}
+
+.loading-spinner p {
+  color: var(--text-secondary);
+  font-size: 16px;
+  margin: 0;
 }
 
 /* Dashboard Styles */
@@ -855,11 +925,15 @@ ul {
 }
 
 .badge-lost {
+  padding: 6px 12px;
+  border-radius: 6px;
   background-color: rgba(239, 68, 68, 0.1);
   color: var(--badge-lost);
 }
 
 .badge-found {
+  padding: 6px 12px;
+  border-radius: 6px;
   background-color: rgba(16, 185, 129, 0.1);
   color: var(--badge-found);
 }
@@ -869,26 +943,36 @@ ul {
 }
 
 .badge-open {
+  padding: 6px 12px;
+  border-radius: 6px;
   background-color: rgba(59, 130, 246, 0.1);
   color: var(--badge-open);
 }
 
 .badge-pending {
+  padding: 6px 12px;
+  border-radius: 6px;
   background-color: rgba(245, 158, 11, 0.1);
   color: var(--badge-pending);
 }
 
 .badge-approved {
+  padding: 6px 12px;
+  border-radius: 6px;
   background-color: rgba(16, 185, 129, 0.1);
   color: var(--badge-approved);
 }
 
 .badge-returned {
+  padding: 6px 12px;
+  border-radius: 6px;
   background-color: rgba(107, 114, 128, 0.1);
   color: var(--badge-returned);
 }
 
 .badge-hidden {
+  padding: 6px 12px;
+  border-radius: 6px;
   background-color: rgba(220, 38, 38, 0.1);
   color: var(--badge-hidden);
 }
@@ -2196,7 +2280,7 @@ select.form-control {
 /* Badges */
 .badge {
   display: inline-block;
-  padding: 4px 12px;
+  padding: 6px 12px;
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
@@ -2205,46 +2289,55 @@ select.form-control {
 }
 
 .badge-lost {
+  padding: 6px 12px;
   background: var(--danger-light);
   color: var(--danger-color);
 }
 
 .badge-found {
+  padding: 6px 12px;
   background: var(--success-light);
   color: var(--success-color);
 }
 
 .badge-open {
+  padding: 6px 12px;
   background: var(--info-light);
   color: var(--info-color);
 }
 
 .badge-pending {
+  padding: 6px 12px;
   background: var(--warning-light);
   color: var(--warning-color);
 }
 
 .badge-approved {
+  padding: 6px 12px;
   background: var(--success-light);
   color: var(--success-color);
 }
 
 .badge-rejected {
+  padding: 6px 12px;
   background: #fee2e2;
   color: #dc2626;
 }
 
 .badge-returned {
+  padding: 6px 12px;
   background: #e5e7eb;
   color: #6b7280;
 }
 
 .badge-hidden {
+  padding: 6px 12px;
   background: #fee2e2;
   color: #dc2626;
 }
 
 .badge-resolved {
+  padding: 6px 12px;
   background: var(--success-light);
   color: var(--success-color);
 }
@@ -3184,9 +3277,15 @@ select.form-control {
 }
 
 .report-reason {
+  display: inline-block;
+  padding: 6px 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 6px;
   font-weight: 600;
   color: var(--danger-color);
-  font-size: 13px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .modal-large {

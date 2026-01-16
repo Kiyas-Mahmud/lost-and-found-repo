@@ -4,15 +4,18 @@
  * Handles claim review and approval/rejection
  */
 
-require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/db.php';
-requireAdmin();
 
 class ClaimsController {
     private $db;
+    private $lastError = null;
     
     public function __construct() {
         $this->db = get_db_connection();
+    }
+    
+    public function getLastError() {
+        return $this->lastError;
     }
     
     public function getPendingClaims($filters = [], $page = 1, $perPage = 15) {
@@ -81,7 +84,7 @@ class ClaimsController {
     public function getClaimDetails($claimId) {
         $query = "SELECT 
                     c.*,
-                    i.title,
+                    i.title as item_title,
                     i.description as item_description,
                     i.item_type,
                     i.event_date,
@@ -90,9 +93,12 @@ class ClaimsController {
                     loc.location_name,
                     u.full_name as claimer_name,
                     u.email as claimer_email,
+                    u.student_id as claimer_student_id,
                     u.phone as claimer_phone,
                     poster.full_name as poster_name,
-                    poster.email as poster_email
+                    poster.email as poster_email,
+                    poster.student_id as poster_student_id,
+                    poster.phone as poster_phone
                   FROM claims c
                   JOIN items i ON c.item_id = i.item_id
                   JOIN users u ON c.claimed_by = u.user_id
@@ -107,7 +113,7 @@ class ClaimsController {
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
     
-    public function approveClaim($claimId, $adminNote = '') {
+    public function approveClaim($claimId, $adminNote = '', $adminId = null) {
         try {
             $this->db->beginTransaction();
             
@@ -122,7 +128,7 @@ class ClaimsController {
             ");
             $stmt->execute([
                 ':admin_note' => $adminNote,
-                ':admin_id' => $_SESSION['user_id'],
+                ':admin_id' => $adminId,
                 ':claim_id' => $claimId
             ]);
             
@@ -139,24 +145,32 @@ class ClaimsController {
             return true;
         } catch (Exception $e) {
             $this->db->rollBack();
+            $this->lastError = $e->getMessage();
             return false;
         }
     }
     
-    public function rejectClaim($claimId, $adminNote = '') {
-        $stmt = $this->db->prepare("
-            UPDATE claims 
-            SET claim_status = 'REJECTED',
-                admin_note = :admin_note,
-                reviewed_by = :admin_id,
-                reviewed_at = NOW()
-            WHERE claim_id = :claim_id
-        ");
-        
-        return $stmt->execute([
-            ':admin_note' => $adminNote,
-            ':admin_id' => $_SESSION['user_id'],
-            ':claim_id' => $claimId
-        ]);
+    public function rejectClaim($claimId, $adminNote = '', $adminId = null) {
+        try {
+            $stmt = $this->db->prepare("
+                UPDATE claims 
+                SET claim_status = 'REJECTED',
+                    admin_note = :admin_note,
+                    reviewed_by = :admin_id,
+                    reviewed_at = NOW()
+                WHERE claim_id = :claim_id
+            ");
+            
+            $result = $stmt->execute([
+                ':admin_note' => $adminNote,
+                ':admin_id' => $adminId,
+                ':claim_id' => $claimId
+            ]);
+            
+            return $result;
+        } catch (Exception $e) {
+            $this->lastError = $e->getMessage();
+            return false;
+        }
     }
 }

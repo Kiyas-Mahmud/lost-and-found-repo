@@ -60,39 +60,42 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <p class="auth-subtitle">Please enter your details to register</p>
             </div>
             
-            <form method="POST" action="" id="registerForm">
+            <form method="POST" action="" id="registerForm" novalidate>
                 <div class="form-group">
-                    <label for="full_name">Full Name</label>
+                    <label for="full_name">Full Name <span class="required">*</span></label>
                     <input type="text" 
                            id="full_name" 
                            name="full_name" 
                            placeholder="Enter your full name"
                            value="<?php echo htmlspecialchars($_POST['full_name'] ?? ''); ?>" 
                            required>
+                    <span class="error-message" id="full_name-error"></span>
                 </div>
                 
                 <div class="form-group">
-                    <label for="email">Email Address</label>
+                    <label for="email">Email Address <span class="required">*</span></label>
                     <input type="email" 
                            id="email" 
                            name="email" 
                            placeholder="example@email.com"
                            value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" 
                            required>
+                    <span class="error-message" id="email-error"></span>
                 </div>
                 
                 <div class="form-group">
-                    <label for="student_id">Student ID</label>
+                    <label for="student_id">Student ID <span class="required">*</span></label>
                     <input type="text" 
                            id="student_id" 
                            name="student_id" 
                            placeholder="Enter your student ID"
                            value="<?php echo htmlspecialchars($_POST['student_id'] ?? ''); ?>" 
                            required>
+                    <span class="error-message" id="student_id-error"></span>
                 </div>
                 
                 <div class="form-group">
-                    <label for="phone">Phone Number</label>
+                    <label for="phone">Phone Number <span class="required">*</span></label>
                     <input type="tel" 
                            id="phone" 
                            name="phone" 
@@ -102,10 +105,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                            value="<?php echo htmlspecialchars($_POST['phone'] ?? ''); ?>" 
                            required>
                     <small class="form-hint">11 digits starting with 01</small>
+                    <span class="error-message" id="phone-error"></span>
                 </div>
                 
                 <div class="form-group">
-                    <label for="password">Password</label>
+                    <label for="password">Password <span class="required">*</span></label>
                     <div class="password-input">
                         <input type="password" 
                                id="password" 
@@ -121,10 +125,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </button>
                     </div>
                     <small class="form-hint">At least 6 characters</small>
+                    <span class="error-message" id="password-error"></span>
                 </div>
                 
                 <div class="form-group">
-                    <label for="confirm_password">Confirm Password</label>
+                    <label for="confirm_password">Confirm Password <span class="required">*</span></label>
                     <div class="password-input">
                         <input type="password" 
                                id="confirm_password" 
@@ -139,6 +144,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             </svg>
                         </button>
                     </div>
+                    <span class="error-message" id="confirm_password-error"></span>
+                    <span class="success-message" id="confirm_password-success"></span>
                 </div>
                 
                 <button type="submit" class="btn btn-primary" id="submitBtn">
@@ -199,30 +206,261 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         }
 
-        // Phone number validation
-        document.getElementById('phone').addEventListener('input', function(e) {
+        // Get form elements
+        const registerForm = document.getElementById('registerForm');
+        const fullNameInput = document.getElementById('full_name');
+        const emailInput = document.getElementById('email');
+        const studentIdInput = document.getElementById('student_id');
+        const phoneInput = document.getElementById('phone');
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirm_password');
+
+        // Phone number validation - only allow digits
+        phoneInput.addEventListener('input', function(e) {
             this.value = this.value.replace(/[^0-9]/g, '');
-        });
-
-        // Form submission with loading state
-        document.getElementById('registerForm').addEventListener('submit', function() {
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.querySelector('.btn-text').style.display = 'none';
-            btn.querySelector('.btn-loader').style.display = 'flex';
-        });
-
-        // Password match validation
-        document.getElementById('confirm_password').addEventListener('input', function() {
-            const password = document.getElementById('password').value;
-            const confirmPassword = this.value;
-            
-            if (confirmPassword && password !== confirmPassword) {
-                this.setCustomValidity('Passwords do not match');
-            } else {
-                this.setCustomValidity('');
+            if (this.value.trim()) {
+                clearError('phone');
             }
         });
+
+        // Real-time validation for all fields
+        fullNameInput.addEventListener('blur', function() {
+            validateFullName();
+        });
+
+        fullNameInput.addEventListener('input', function() {
+            if (this.value.trim()) {
+                clearError('full_name');
+            }
+        });
+
+        emailInput.addEventListener('blur', function() {
+            validateEmail();
+        });
+
+        emailInput.addEventListener('input', function() {
+            if (this.value.trim()) {
+                clearError('email');
+            }
+        });
+
+        studentIdInput.addEventListener('blur', function() {
+            validateStudentId();
+        });
+
+        studentIdInput.addEventListener('input', function() {
+            if (this.value.trim()) {
+                clearError('student_id');
+            }
+        });
+
+        phoneInput.addEventListener('blur', function() {
+            validatePhone();
+        });
+
+        passwordInput.addEventListener('blur', function() {
+            validatePassword();
+        });
+
+        passwordInput.addEventListener('input', function() {
+            if (this.value) {
+                clearError('password');
+                // Check password match if confirm password is filled
+                if (confirmPasswordInput.value) {
+                    validatePasswordMatch();
+                }
+            }
+        });
+
+        // Real-time password match validation
+        confirmPasswordInput.addEventListener('input', function() {
+            validatePasswordMatch();
+        });
+
+        confirmPasswordInput.addEventListener('blur', function() {
+            validateConfirmPassword();
+        });
+
+        // Form submission validation
+        registerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const isFullNameValid = validateFullName();
+            const isEmailValid = validateEmail();
+            const isStudentIdValid = validateStudentId();
+            const isPhoneValid = validatePhone();
+            const isPasswordValid = validatePassword();
+            const isConfirmPasswordValid = validateConfirmPassword();
+            const isPasswordMatch = validatePasswordMatch();
+
+            if (isFullNameValid && isEmailValid && isStudentIdValid && 
+                isPhoneValid && isPasswordValid && isConfirmPasswordValid && isPasswordMatch) {
+                
+                // Show loading state
+                const btn = document.getElementById('submitBtn');
+                btn.disabled = true;
+                btn.querySelector('.btn-text').style.display = 'none';
+                btn.querySelector('.btn-loader').style.display = 'flex';
+                
+                // Submit the form
+                this.submit();
+            }
+        });
+
+        // Validation functions
+        function validateFullName() {
+            const value = fullNameInput.value.trim();
+            
+            if (!value) {
+                showError('full_name', 'Full name is required');
+                return false;
+            }
+
+            if (value.length < 2) {
+                showError('full_name', 'Full name must be at least 2 characters');
+                return false;
+            }
+
+            clearError('full_name');
+            return true;
+        }
+
+        function validateEmail() {
+            const value = emailInput.value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!value) {
+                showError('email', 'Email is required');
+                return false;
+            }
+
+            if (!emailRegex.test(value)) {
+                showError('email', 'Please enter a valid email address');
+                return false;
+            }
+
+            clearError('email');
+            return true;
+        }
+
+        function validateStudentId() {
+            const value = studentIdInput.value.trim();
+
+            if (!value) {
+                showError('student_id', 'Student ID is required');
+                return false;
+            }
+
+            if (value.length < 3) {
+                showError('student_id', 'Student ID must be at least 3 characters');
+                return false;
+            }
+
+            clearError('student_id');
+            return true;
+        }
+
+        function validatePhone() {
+            const value = phoneInput.value.trim();
+            const phoneRegex = /^01[0-9]{9}$/;
+
+            if (!value) {
+                showError('phone', 'Phone number is required');
+                return false;
+            }
+
+            if (!phoneRegex.test(value)) {
+                showError('phone', 'Phone must be 11 digits starting with 01');
+                return false;
+            }
+
+            clearError('phone');
+            return true;
+        }
+
+        function validatePassword() {
+            const value = passwordInput.value;
+
+            if (!value) {
+                showError('password', 'Password is required');
+                return false;
+            }
+
+            if (value.length < 6) {
+                showError('password', 'Password must be at least 6 characters');
+                return false;
+            }
+
+            clearError('password');
+            return true;
+        }
+
+        function validateConfirmPassword() {
+            const value = confirmPasswordInput.value;
+
+            if (!value) {
+                showError('confirm_password', 'Please confirm your password');
+                clearSuccess('confirm_password');
+                return false;
+            }
+
+            return validatePasswordMatch();
+        }
+
+        function validatePasswordMatch() {
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+
+            if (!confirmPassword) {
+                clearError('confirm_password');
+                clearSuccess('confirm_password');
+                return false;
+            }
+
+            if (password !== confirmPassword) {
+                showError('confirm_password', 'Passwords do not match');
+                clearSuccess('confirm_password');
+                return false;
+            }
+
+            clearError('confirm_password');
+            showSuccess('confirm_password', 'Passwords match');
+            return true;
+        }
+
+        function showError(fieldId, message) {
+            const input = document.getElementById(fieldId);
+            const errorElement = document.getElementById(fieldId + '-error');
+            
+            input.classList.add('input-error');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+
+        function clearError(fieldId) {
+            const input = document.getElementById(fieldId);
+            const errorElement = document.getElementById(fieldId + '-error');
+            
+            input.classList.remove('input-error');
+            errorElement.textContent = '';
+            errorElement.style.display = 'none';
+        }
+
+        function showSuccess(fieldId, message) {
+            const successElement = document.getElementById(fieldId + '-success');
+            if (successElement) {
+                successElement.textContent = message;
+                successElement.style.display = 'block';
+            }
+        }
+
+        function clearSuccess(fieldId) {
+            const successElement = document.getElementById(fieldId + '-success');
+            if (successElement) {
+                successElement.textContent = '';
+                successElement.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>

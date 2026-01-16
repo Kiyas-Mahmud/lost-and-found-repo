@@ -1,4 +1,8 @@
 <?php
+// Check authentication
+require_once '../../config/session.php';
+requireAdmin();
+
 // Load controller
 require_once '../../controllers/admin/claims.php';
 
@@ -17,14 +21,23 @@ $controller = new ClaimsController();
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
     $adminNotes = $_POST['admin_notes'] ?? '';
+    $adminId = $_SESSION['user_id'];
     
     if ($action === 'approve') {
-        $controller->approveClaim($claimId, $adminNotes);
-        header('Location: pending-claims.php?msg=approve');
+        $success = $controller->approveClaim($claimId, $adminNotes, $adminId);
+        if ($success) {
+            header('Location: pending-claims.php?msg=approve');
+        } else {
+            header('Location: pending-claims.php?msg=error&error=' . urlencode($controller->getLastError()));
+        }
         exit();
     } elseif ($action === 'reject') {
-        $controller->rejectClaim($claimId, $adminNotes);
-        header('Location: pending-claims.php?msg=reject');
+        $success = $controller->rejectClaim($claimId, $adminNotes, $adminId);
+        if ($success) {
+            header('Location: pending-claims.php?msg=reject');
+        } else {
+            header('Location: pending-claims.php?msg=error&error=' . urlencode($controller->getLastError()));
+        }
         exit();
     }
 }
@@ -128,7 +141,7 @@ if (!$claim) {
                                 <div class="user-avatar-lg"><?php echo strtoupper(substr($claim->poster_name, 0, 1)); ?></div>
                                 <div class="user-details">
                                     <div class="user-name-lg"><?php echo htmlspecialchars($claim->poster_name); ?></div>
-                                    <div class="user-meta"><?php echo htmlspecialchars($claim->poster_student_id); ?></div>
+                                    <div class="user-meta"><?php echo htmlspecialchars($claim->poster_student_id ?? 'N/A'); ?></div>
                                     <div class="user-meta"><?php echo htmlspecialchars($claim->poster_email); ?></div>
                                 </div>
                             </div>
@@ -157,10 +170,10 @@ if (!$claim) {
                                 <div class="user-avatar-lg"><?php echo strtoupper(substr($claim->claimer_name, 0, 1)); ?></div>
                                 <div class="user-details">
                                     <div class="user-name-lg"><?php echo htmlspecialchars($claim->claimer_name); ?></div>
-                                    <div class="user-meta"><?php echo htmlspecialchars($claim->claimer_student_id); ?></div>
+                                    <div class="user-meta"><?php echo htmlspecialchars($claim->claimer_student_id ?? 'N/A'); ?></div>
                                     <div class="user-meta"><?php echo htmlspecialchars($claim->claimer_email); ?></div>
-                                    <?php if ($claim->phone): ?>
-                                        <div class="user-meta">📱 <?php echo htmlspecialchars($claim->phone); ?></div>
+                                    <?php if (!empty($claim->claimer_phone)): ?>
+                                        <div class="user-meta">📱 <?php echo htmlspecialchars($claim->claimer_phone); ?></div>
                                     <?php endif; ?>
                                 </div>
                             </div>

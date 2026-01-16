@@ -4,15 +4,18 @@
  * Handles report management and resolution
  */
 
-require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/db.php';
-requireAdmin();
 
 class ReportsController {
     private $db;
+    private $lastError = null;
     
     public function __construct() {
         $this->db = get_db_connection();
+    }
+    
+    public function getLastError() {
+        return $this->lastError;
     }
     
     public function getAllReports($filters = [], $page = 1, $perPage = 15) {
@@ -84,37 +87,51 @@ class ReportsController {
         return $counts;
     }
     
-    public function resolveReport($reportId, $resolution = '') {
-        $stmt = $this->db->prepare("
-            UPDATE reports 
-            SET report_status = 'RESOLVED',
-                admin_note = :resolution,
-                resolved_by = :admin_id,
-                resolved_at = NOW()
-            WHERE report_id = :report_id
-        ");
-        
-        return $stmt->execute([
-            ':resolution' => $resolution,
-            ':admin_id' => $_SESSION['user_id'],
-            ':report_id' => $reportId
-        ]);
+    public function resolveReport($reportId, $resolution = '', $adminId = null) {
+        try {
+            $stmt = $this->db->prepare("
+                UPDATE reports 
+                SET report_status = 'RESOLVED',
+                    admin_note = :resolution,
+                    resolved_by = :admin_id,
+                    resolved_at = NOW()
+                WHERE report_id = :report_id
+            ");
+            
+            $result = $stmt->execute([
+                ':resolution' => $resolution,
+                ':admin_id' => $adminId,
+                ':report_id' => $reportId
+            ]);
+            
+            return $result;
+        } catch (Exception $e) {
+            $this->lastError = $e->getMessage();
+            return false;
+        }
     }
     
-    public function dismissReport($reportId, $reason = '') {
-        $stmt = $this->db->prepare("
-            UPDATE reports 
-            SET report_status = 'RESOLVED',
-                admin_note = :reason,
-                resolved_by = :admin_id,
-                resolved_at = NOW()
-            WHERE report_id = :report_id
-        ");
-        
-        return $stmt->execute([
-            ':reason' => $reason,
-            ':admin_id' => $_SESSION['user_id'],
-            ':report_id' => $reportId
-        ]);
+    public function dismissReport($reportId, $reason = '', $adminId = null) {
+        try {
+            $stmt = $this->db->prepare("
+                UPDATE reports 
+                SET report_status = 'RESOLVED',
+                    admin_note = :reason,
+                    resolved_by = :admin_id,
+                    resolved_at = NOW()
+                WHERE report_id = :report_id
+            ");
+            
+            $result = $stmt->execute([
+                ':reason' => $reason,
+                ':admin_id' => $adminId,
+                ':report_id' => $reportId
+            ]);
+            
+            return $result;
+        } catch (Exception $e) {
+            $this->lastError = $e->getMessage();
+            return false;
+        }
     }
 }

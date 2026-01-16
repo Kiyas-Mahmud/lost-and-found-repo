@@ -1,4 +1,8 @@
 <?php
+// Check authentication
+require_once '../../config/session.php';
+requireAdmin();
+
 // Load controller
 require_once '../../controllers/admin/locations.php';
 
@@ -11,12 +15,20 @@ $controller = new LocationsController();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
         if ($_POST['action'] === 'add' && !empty($_POST['location_name'])) {
-            $controller->addLocation($_POST['location_name']);
-            header('Location: locations.php?msg=added');
+            $success = $controller->addLocation($_POST['location_name']);
+            if ($success) {
+                header('Location: locations.php?msg=added');
+            } else {
+                header('Location: locations.php?msg=error&error=' . urlencode($controller->getLastError()));
+            }
             exit();
         } elseif ($_POST['action'] === 'toggle' && !empty($_POST['location_id'])) {
-            $controller->toggleLocation($_POST['location_id']);
-            header('Location: locations.php?msg=updated');
+            $success = $controller->toggleLocation($_POST['location_id']);
+            if ($success) {
+                header('Location: locations.php?msg=updated');
+            } else {
+                header('Location: locations.php?msg=error&error=' . urlencode($controller->getLastError()));
+            }
             exit();
         }
     }

@@ -1,17 +1,7 @@
 <?php
-// Load controller
-require_once '../../controllers/admin/dashboard.php';
-
+require_once '../../config/session.php';
+requireAdmin();
 $pageTitle = 'Dashboard';
-
-// Get all dashboard data from controller
-$totalUsers = $dashboardData['totalUsers'];
-$totalPosts = $dashboardData['activePosts'];
-$pendingClaims = $dashboardData['pendingClaims'];
-$openReports = $dashboardData['openReports'];
-$hiddenPosts = $dashboardData['hiddenPosts'];
-$todayActivity = $dashboardData['todayActivity'];
-$recentActivity = $dashboardData['recentActivity'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -19,6 +9,7 @@ $recentActivity = $dashboardData['recentActivity'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle; ?> - Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
@@ -29,51 +20,25 @@ $recentActivity = $dashboardData['recentActivity'];
             <?php include '../components/admin/header.php'; ?>
             
             <div class="admin-content">
+                <!-- Loading Spinner -->
+                <div id="dashboardLoading" class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading dashboard data...</p>
+                </div>
+
                 <!-- Statistics Grid -->
-                <div class="stats-grid">
-                    <?php 
-                    include '../components/admin/stat_card.php';
-                    renderStatCard('users', $totalUsers, 'Total Users', 'primary');
-                    renderStatCard('posts', $totalPosts, 'Total Posts', 'info');
-                    renderStatCard('claims', $pendingClaims, 'Pending Claims', 'warning');
-                    renderStatCard('reports', $openReports, 'Open Reports', 'warning');
-                    renderStatCard('hidden', $hiddenPosts, 'Hidden Posts', 'danger');
-                    renderStatCard('activity', $todayActivity, "Today's Activity", 'success');
-                    ?>
+                <div id="statsGrid" class="stats-grid" style="display: none;">
+                    <!-- Stats will be loaded via AJAX -->
                 </div>
 
                 <!-- Recent Activity -->
-                <div class="admin-table-container">
+                <div id="recentActivityContainer" class="admin-table-container" style="display: none;">
                     <div class="table-header">
                         <h3 class="table-title">Recent Activity</h3>
                     </div>
-                    
-                    <?php if (count($recentActivity) > 0): ?>
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>Activity</th>
-                                    <th>Description</th>
-                                    <th>Time</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($recentActivity as $activity): ?>
-                                    <tr>
-                                        <td><?php echo htmlspecialchars($activity->activity_text); ?></td>
-                                        <td><?php echo htmlspecialchars($activity->description); ?></td>
-                                        <td><?php echo date('M d, Y h:i A', strtotime($activity->activity_time)); ?></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    <?php else: ?>
-                        <div class="empty-state">
-                            <div class="empty-icon">📭</div>
-                            <h3 class="empty-title">No Recent Activity</h3>
-                            <p class="empty-text">There's no recent activity to display.</p>
-                        </div>
-                    <?php endif; ?>
+                    <div id="recentActivityContent">
+                        <!-- Activity will be loaded via AJAX -->
+                    </div>
                 </div>
 
                 <!-- Quick Actions -->
@@ -129,5 +94,119 @@ $recentActivity = $dashboardData['recentActivity'];
     </div>
 
     <script src="../../assets/js/main.js"></script>
+    <script>
+        // Load dashboard data on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('Dashboard: DOM loaded, starting data fetch...');
+            await loadDashboardData();
+        });
+
+        async function loadDashboardData() {
+            const loading = document.getElementById('dashboardLoading');
+            const statsGrid = document.getElementById('statsGrid');
+            const activityContainer = document.getElementById('recentActivityContainer');
+
+            try {
+                console.log('Dashboard: Showing loading spinner...');
+                // Show loading
+                loading.style.display = 'flex';
+                statsGrid.style.display = 'none';
+                activityContainer.style.display = 'none';
+
+                console.log('Dashboard: Fetching data from API...');
+                // Fetch dashboard data
+                const response = await apiGet('../../api/admin/dashboard.php');
+                
+                console.log('Dashboard: Response received:', response);
+                
+                if (response.success) {
+                    const data = response.data;
+                    console.log('Dashboard: Data:', data);
+                    
+                    // Render statistics
+                    renderStats(data);
+                    
+                    // Render recent activity
+                    renderRecentActivity(data.recentActivity);
+                    
+                    // Hide loading and show content
+                    loading.style.display = 'none';
+                    statsGrid.style.display = 'grid';
+                    activityContainer.style.display = 'block';
+                    
+                    console.log('Dashboard: Data loaded successfully');
+                    showToast('Dashboard loaded successfully', 'success');
+                } else {
+                    console.error('Dashboard: API returned error:', response.message);
+                    showToast(response.message || 'Failed to load dashboard data', 'error');
+                    loading.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Dashboard load error:', error);
+                showToast('Failed to load dashboard data: ' + error.message, 'error');
+                loading.style.display = 'none';
+            }
+        }
+
+        function renderStats(data) {
+            const statsGrid = document.getElementById('statsGrid');
+            const stats = [
+                { icon: 'users', value: data.totalUsers, label: 'Total Users', color: 'primary' },
+                { icon: 'box', value: data.activePosts, label: 'Active Posts', color: 'info' },
+                { icon: 'hand-paper', value: data.pendingClaims, label: 'Pending Claims', color: 'warning' },
+                { icon: 'flag', value: data.openReports, label: 'Open Reports', color: 'warning' },
+                { icon: 'eye-slash', value: data.hiddenPosts, label: 'Hidden Posts', color: 'danger' },
+                { icon: 'chart-line', value: data.todayActivity, label: "Today's Activity", color: 'success' }
+            ];
+
+            statsGrid.innerHTML = stats.map(stat => `
+                <div class="stat-card stat-card-${stat.color}">
+                    <div class="stat-icon">
+                        <i class="fas fa-${stat.icon}"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">${stat.value}</div>
+                        <div class="stat-label">${stat.label}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderRecentActivity(activities) {
+            const container = document.getElementById('recentActivityContent');
+            
+            if (!activities || activities.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <h3 class="empty-title">No Recent Activity</h3>
+                        <p class="empty-text">There's no recent activity to display.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Activity</th>
+                            <th>Description</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${activities.map(activity => `
+                            <tr>
+                                <td>${activity.activity_text || 'N/A'}</td>
+                                <td>${activity.description || 'N/A'}</td>
+                                <td>${formatDateTime(activity.activity_time)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+    </script>
 </body>
 </html>

@@ -57,18 +57,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <p class="auth-subtitle">Please login to your account</p>
             </div>
             
-            <form method="POST" action="">
+            <form method="POST" action="" id="loginForm" novalidate>
                 <div class="form-group">
-                    <label for="login">Email or Student ID</label>
+                    <label for="login">Email or Student ID <span class="required">*</span></label>
                     <input type="text" 
                            id="login" 
                            name="login" 
                            placeholder="Enter your email or student ID"
                            value="<?php echo htmlspecialchars($_POST['login'] ?? ''); ?>" 
+                           required>
+                    <span class="error-message" id="login-error"></span>
                 </div>
                 
                 <div class="form-group">
-                    <label for="password">Password</label>
+                    <label for="password">Password <span class="required">*</span></label>
                     <div class="password-input">
                         <input type="password" 
                                id="password" 
@@ -82,6 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             </svg>
                         </button>
                     </div>
+                    <span class="error-message" id="password-error"></span>
                 </div>
                 
                 <button type="submit" class="btn btn-primary">
@@ -133,6 +136,88 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 field.type = 'password';
                 button.innerHTML = '<svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>';
             }
+        }
+
+        // Form validation
+        const loginForm = document.getElementById('loginForm');
+        const loginInput = document.getElementById('login');
+        const passwordInput = document.getElementById('password');
+
+        // Real-time validation
+        loginInput.addEventListener('blur', function() {
+            validateLogin();
+        });
+
+        loginInput.addEventListener('input', function() {
+            if (this.value.trim()) {
+                clearError('login');
+            }
+        });
+
+        passwordInput.addEventListener('blur', function() {
+            validatePassword();
+        });
+
+        passwordInput.addEventListener('input', function() {
+            if (this.value) {
+                clearError('password');
+            }
+        });
+
+        // Form submission validation
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const isLoginValid = validateLogin();
+            const isPasswordValid = validatePassword();
+
+            if (isLoginValid && isPasswordValid) {
+                this.submit();
+            }
+        });
+
+        function validateLogin() {
+            const value = loginInput.value.trim();
+            const errorElement = document.getElementById('login-error');
+
+            if (!value) {
+                showError('login', 'Email or Student ID is required');
+                return false;
+            }
+
+            clearError('login');
+            return true;
+        }
+
+        function validatePassword() {
+            const value = passwordInput.value;
+            const errorElement = document.getElementById('password-error');
+
+            if (!value) {
+                showError('password', 'Password is required');
+                return false;
+            }
+
+            clearError('password');
+            return true;
+        }
+
+        function showError(fieldId, message) {
+            const input = document.getElementById(fieldId);
+            const errorElement = document.getElementById(fieldId + '-error');
+            
+            input.classList.add('input-error');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+
+        function clearError(fieldId) {
+            const input = document.getElementById(fieldId);
+            const errorElement = document.getElementById(fieldId + '-error');
+            
+            input.classList.remove('input-error');
+            errorElement.textContent = '';
+            errorElement.style.display = 'none';
         }
     </script>
 </body>

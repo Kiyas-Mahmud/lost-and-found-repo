@@ -200,6 +200,100 @@ function formatDateTime(dateString) {
 }
 
 /**
+ * API Helper - Fetch wrapper with error handling
+ */
+async function apiRequest(url, options = {}) {
+  try {
+    const defaultOptions = {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      credentials: "same-origin",
+    };
+
+    const response = await fetch(url, { ...defaultOptions, ...options });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Request failed");
+    }
+
+    return data;
+  } catch (error) {
+    console.error("API Error:", error);
+    throw error;
+  }
+}
+
+/**
+ * API GET request
+ */
+async function apiGet(url) {
+  return apiRequest(url, { method: "GET" });
+}
+
+/**
+ * API POST request
+ */
+async function apiPost(url, data) {
+  return apiRequest(url, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * API PUT request
+ */
+async function apiPut(url, data) {
+  return apiRequest(url, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * API DELETE request
+ */
+async function apiDelete(url) {
+  return apiRequest(url, { method: "DELETE" });
+}
+
+/**
+ * Show Toast Notification
+ */
+function showToast(message, type = "success") {
+  // Remove existing toast
+  const existingToast = document.getElementById("toast");
+  if (existingToast) {
+    existingToast.remove();
+  }
+
+  // Create toast
+  const toast = document.createElement("div");
+  toast.id = "toast";
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `
+    <i class="fas fa-${
+      type === "success" ? "check-circle" : "exclamation-circle"
+    }"></i>
+    <span>${message}</span>
+  `;
+
+  document.body.appendChild(toast);
+
+  // Show toast
+  setTimeout(() => toast.classList.add("show"), 100);
+
+  // Auto hide after 3 seconds
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+/**
  * Show Loading Spinner
  */
 function showLoading(element) {

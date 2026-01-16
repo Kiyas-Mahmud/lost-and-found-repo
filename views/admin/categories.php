@@ -1,4 +1,8 @@
 <?php
+// Check authentication
+require_once '../../config/session.php';
+requireAdmin();
+
 // Load controller
 require_once '../../controllers/admin/categories.php';
 
@@ -11,12 +15,20 @@ $controller = new CategoriesController();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
         if ($_POST['action'] === 'add' && !empty($_POST['category_name'])) {
-            $controller->addCategory($_POST['category_name']);
-            header('Location: categories.php?msg=added');
+            $success = $controller->addCategory($_POST['category_name']);
+            if ($success) {
+                header('Location: categories.php?msg=added');
+            } else {
+                header('Location: categories.php?msg=error&error=' . urlencode($controller->getLastError()));
+            }
             exit();
         } elseif ($_POST['action'] === 'toggle' && !empty($_POST['category_id'])) {
-            $controller->toggleCategory($_POST['category_id']);
-            header('Location: categories.php?msg=updated');
+            $success = $controller->toggleCategory($_POST['category_id']);
+            if ($success) {
+                header('Location: categories.php?msg=updated');
+            } else {
+                header('Location: categories.php?msg=error&error=' . urlencode($controller->getLastError()));
+            }
             exit();
         }
     }

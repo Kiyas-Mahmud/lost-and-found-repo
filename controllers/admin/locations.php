@@ -4,15 +4,18 @@
  * Handles location CRUD operations
  */
 
-require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/db.php';
-requireAdmin();
 
 class LocationsController {
     private $db;
+    private $lastError = null;
     
     public function __construct() {
         $this->db = get_db_connection();
+    }
+    
+    public function getLastError() {
+        return $this->lastError;
     }
     
     public function getAllLocations() {
@@ -30,39 +33,58 @@ class LocationsController {
     }
     
     public function addLocation($locationName) {
-        $stmt = $this->db->prepare("
-            INSERT INTO locations (location_name, is_active) 
-            VALUES (:name, 1)
-        ");
-        
-        return $stmt->execute([':name' => $locationName]);
+        try {
+            $stmt = $this->db->prepare("
+                INSERT INTO locations (location_name, is_active) 
+                VALUES (:name, 1)
+            ");
+            
+            $result = $stmt->execute([':name' => $locationName]);
+            return $result;
+        } catch (Exception $e) {
+            $this->lastError = $e->getMessage();
+            return false;
+        }
     }
     
     public function toggleLocation($locationId) {
-        $stmt = $this->db->prepare("
-            UPDATE locations 
-            SET is_active = NOT is_active 
-            WHERE location_id = :id
-        ");
-        
-        return $stmt->execute([':id' => $locationId]);
+        try {
+            $stmt = $this->db->prepare("
+                UPDATE locations 
+                SET is_active = NOT is_active 
+                WHERE location_id = :id
+            ");
+            
+            $result = $stmt->execute([':id' => $locationId]);
+            return $result;
+        } catch (Exception $e) {
+            $this->lastError = $e->getMessage();
+            return false;
+        }
     }
     
     public function deleteLocation($locationId) {
-        // Check if location is in use
-        $stmt = $this->db->prepare("
-            SELECT COUNT(*) as count 
-            FROM items 
-            WHERE location_id = :id
-        ");
-        $stmt->execute([':id' => $locationId]);
-        $count = $stmt->fetch(PDO::FETCH_OBJ)->count;
-        
-        if ($count > 0) {
-            return false; // Cannot delete location in use
+        try {
+            // Check if location is in use
+            $stmt = $this->db->prepare("
+                SELECT COUNT(*) as count 
+                FROM items 
+                WHERE location_id = :id
+            ");
+            $stmt->execute([':id' => $locationId]);
+            $count = $stmt->fetch(PDO::FETCH_OBJ)->count;
+            
+            if ($count > 0) {
+                $this->lastError = 'Cannot delete location that is in use';
+                return false;
+            }
+            
+            $stmt = $this->db->prepare("DELETE FROM locations WHERE location_id = :id");
+            $result = $stmt->execute([':id' => $locationId]);
+            return $result;
+        } catch (Exception $e) {
+            $this->lastError = $e->getMessage();
+            return false;
         }
-        
-        $stmt = $this->db->prepare("DELETE FROM locations WHERE location_id = :id");
-        return $stmt->execute([':id' => $locationId]);
     }
 }

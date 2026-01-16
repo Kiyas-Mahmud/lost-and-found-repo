@@ -1,23 +1,9 @@
 <?php
-// Load controller
-require_once '../../controllers/admin/claims.php';
+// Check authentication
+require_once '../../config/session.php';
+requireAdmin();
 
 $pageTitle = 'Pending Claims';
-
-// Get filters from request
-$filters = [
-    'type' => $_GET['type'] ?? '',
-    'date' => $_GET['date'] ?? ''
-];
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-
-// Get data from controller
-$controller = new ClaimsController();
-$result = $controller->getPendingClaims($filters, $page, 15);
-
-$claims = $result['claims'];
-$totalClaims = $result['total'];
-$totalPages = $result['totalPages'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -42,37 +28,38 @@ $totalPages = $result['totalPages'];
                         <p class="page-subtitle">Review and manage item claims</p>
                     </div>
                     <div class="page-actions">
-                        <span class="badge-info"><?php echo $totalClaims; ?> Total</span>
+                        <span class="badge-info" id="total-count">0 Total</span>
                     </div>
                 </div>
 
                 <!-- Filters -->
                 <div class="admin-table-container">
                     <div class="table-filters">
-                        <form method="GET" class="filter-form">
+                        <div class="filter-form">
                             <div class="filter-group">
-                                <select name="type" class="filter-select" onchange="this.form.submit()">
+                                <select name="type" id="filter-type" class="filter-select">
                                     <option value="">All Types</option>
-                                    <option value="LOST" <?php echo $filters['type'] === 'LOST' ? 'selected' : ''; ?>>Lost</option>
-                                    <option value="FOUND" <?php echo $filters['type'] === 'FOUND' ? 'selected' : ''; ?>>Found</option>
+                                    <option value="LOST">Lost</option>
+                                    <option value="FOUND">Found</option>
                                 </select>
                                 
-                                <input type="date" 
-                                       name="date" 
+                                <input type="text" 
+                                       id="filter-search" 
                                        class="filter-input" 
-                                       value="<?php echo htmlspecialchars($filters['date']); ?>"
-                                       onchange="this.form.submit()"
-                                       placeholder="Filter by date">
+                                       placeholder="Search by title or user...">
                                 
-                                <?php if ($filters['type'] || $filters['date']): ?>
-                                    <a href="pending-claims.php" class="btn-secondary">Clear Filters</a>
-                                <?php endif; ?>
+                                <button id="clear-filters" class="btn-secondary" style="display: none;">Clear Filters</button>
                             </div>
-                        </form>
+                        </div>
+                    </div>
+
+                    <!-- Loading Spinner -->
+                    <div class="loading-spinner" id="loading-spinner">
+                        <i class="fas fa-circle-notch fa-spin fa-3x" style="color: #ff6b6b;"></i>
                     </div>
 
                     <!-- Claims Table -->
-                    <?php if (count($claims) > 0): ?>
+                    <div id="claims-container" style="display: none;">
                         <div class="table-wrapper">
                             <table class="admin-table">
                                 <thead>
@@ -87,78 +74,235 @@ $totalPages = $result['totalPages'];
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <?php foreach ($claims as $claim): ?>
-                                        <tr>
-                                            <td><span class="text-mono">#<?php echo $claim->claim_id; ?></span></td>
-                                            <td>
-                                                <div class="table-item-title">
-                                                    <?php echo htmlspecialchars($claim->title); ?>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <?php 
-                                                include '../components/admin/badge.php';
-                                                renderTypeBadge($claim->item_type);
-                                                ?>
-                                            </td>
-                                            <td><?php echo htmlspecialchars($claim->category_name); ?></td>
-                                            <td>
-                                                <div class="table-user-info">
-                                                    <div class="user-name"><?php echo htmlspecialchars($claim->claimer_name); ?></div>
-                                                    <div class="user-email"><?php echo htmlspecialchars($claim->claimer_email); ?></div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="table-date">
-                                                    <?php echo date('M d, Y', strtotime($claim->created_at)); ?>
-                                                    <span class="table-time"><?php echo date('h:i A', strtotime($claim->created_at)); ?></span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <?php renderStatusBadge($claim->claim_status); ?>
-                                            </td>
-                                            <td>
-                                                <div class="table-actions">
-                                                    <a href="claim-review.php?id=<?php echo $claim->claim_id; ?>" class="btn-primary-sm">
-                                                        Review
-                                                    </a>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
+                                <tbody id="claims-tbody">
+                                    <!-- Claims will be loaded here via AJAX -->
                                 </tbody>
                             </table>
                         </div>
 
                         <!-- Pagination -->
-                        <?php 
-                        if ($totalPages > 1) {
-                            include '../components/admin/pagination.php';
-                            $baseUrl = 'pending-claims.php?';
-                            if ($filterType) $baseUrl .= 'type=' . urlencode($filterType) . '&';
-                            if ($filterDate) $baseUrl .= 'date=' . urlencode($filterDate) . '&';
-                            renderPagination($page, $totalPages, $baseUrl);
-                        }
-                        ?>
-                    <?php else: ?>
-                        <!-- Empty State -->
-                        <div class="empty-state">
-                            <div class="empty-icon">
-                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <path d="M12 6v6l4 2"/>
-                                </svg>
-                            </div>
-                            <h3 class="empty-title">No Pending Claims</h3>
-                            <p class="empty-text">There are no claims waiting for review at the moment.</p>
+                        <div id="pagination-container"></div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div class="empty-state" id="empty-state" style="display: none;">
+                        <div class="empty-icon">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 6v6l4 2"/>
+                            </svg>
                         </div>
-                    <?php endif; ?>
+                        <h3 class="empty-title">No Pending Claims</h3>
+                        <p class="empty-text">There are no claims waiting for review at the moment.</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script src="../../assets/js/main.js"></script>
+    <script>
+        let currentPage = 1;
+        let currentFilters = {
+            status: 'PENDING',
+            type: '',
+            search: ''
+        };
+
+        // Load claims on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadClaims();
+
+            // Set up filter listeners
+            document.getElementById('filter-type').addEventListener('change', (e) => {
+                currentFilters.type = e.target.value;
+                currentPage = 1;
+                loadClaims();
+                toggleClearButton();
+            });
+
+            document.getElementById('filter-search').addEventListener('input', debounce((e) => {
+                currentFilters.search = e.target.value;
+                currentPage = 1;
+                loadClaims();
+                toggleClearButton();
+            }, 500));
+
+            document.getElementById('clear-filters').addEventListener('click', () => {
+                document.getElementById('filter-type').value = '';
+                document.getElementById('filter-search').value = '';
+                currentFilters = { status: 'PENDING', type: '', search: '' };
+                currentPage = 1;
+                loadClaims();
+                toggleClearButton();
+            });
+        });
+
+        async function loadClaims() {
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const claimsContainer = document.getElementById('claims-container');
+            const emptyState = document.getElementById('empty-state');
+
+            // Show loading
+            loadingSpinner.style.display = 'flex';
+            claimsContainer.style.display = 'none';
+            emptyState.style.display = 'none';
+
+            try {
+                const params = new URLSearchParams({
+                    ...currentFilters,
+                    page: currentPage,
+                    perPage: 15
+                });
+
+                const response = await apiGet(`../../api/admin/claims.php?${params}`);
+
+                if (response.success) {
+                    const { claims, total, totalPages } = response.data;
+
+                    // Update total count
+                    document.getElementById('total-count').textContent = `${total} Total`;
+
+                    if (claims.length > 0) {
+                        renderClaimsTable(claims);
+                        renderPagination(totalPages);
+                        claimsContainer.style.display = 'block';
+                    } else {
+                        emptyState.style.display = 'flex';
+                    }
+                } else {
+                    showToast(response.message || 'Failed to load claims', 'error');
+                    emptyState.style.display = 'flex';
+                }
+            } catch (error) {
+                console.error('Error loading claims:', error);
+                showToast('Error loading claims', 'error');
+                emptyState.style.display = 'flex';
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+        function renderClaimsTable(claims) {
+            const tbody = document.getElementById('claims-tbody');
+            tbody.innerHTML = claims.map(claim => {
+                const claimDate = new Date(claim.created_at);
+                const formattedDate = claimDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const formattedTime = claimDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+                const typeBadge = claim.item_type === 'LOST' 
+                    ? '<span class="badge-lost">Lost</span>' 
+                    : '<span class="badge-found">Found</span>';
+
+                const statusBadge = getStatusBadge(claim.claim_status);
+
+                return `
+                    <tr>
+                        <td><span class="text-mono">#${claim.claim_id}</span></td>
+                        <td>
+                            <div class="table-item-title">${escapeHtml(claim.title)}</div>
+                        </td>
+                        <td>${typeBadge}</td>
+                        <td>${escapeHtml(claim.category_name)}</td>
+                        <td>
+                            <div class="table-user-info">
+                                <div class="user-name">${escapeHtml(claim.claimer_name)}</div>
+                                <div class="user-email">${escapeHtml(claim.claimer_email)}</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="table-date">
+                                ${formattedDate}
+                                <span class="table-time">${formattedTime}</span>
+                            </div>
+                        </td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <div class="table-actions">
+                                <a href="claim-review.php?id=${claim.claim_id}" class="btn-primary-sm">
+                                    Review
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderPagination(totalPages) {
+            const container = document.getElementById('pagination-container');
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '<div class="pagination">';
+            
+            // Previous button
+            html += `<button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">
+                <i class="fas fa-chevron-left"></i>
+            </button>`;
+
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    html += '<span class="pagination-ellipsis">...</span>';
+                }
+            }
+
+            // Next button
+            html += `<button class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">
+                <i class="fas fa-chevron-right"></i>
+            </button>`;
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            loadClaims();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function getStatusBadge(status) {
+            switch(status) {
+                case 'PENDING':
+                    return '<span class="badge-warning">Pending</span>';
+                case 'APPROVED':
+                    return '<span class="badge-success">Approved</span>';
+                case 'REJECTED':
+                    return '<span class="badge-danger">Rejected</span>';
+                default:
+                    return '<span class="badge-secondary">' + status + '</span>';
+            }
+        }
+
+        function toggleClearButton() {
+            const clearBtn = document.getElementById('clear-filters');
+            const hasFilters = currentFilters.type || currentFilters.search;
+            clearBtn.style.display = hasFilters ? 'inline-block' : 'none';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    </script>
 </body>
 </html>

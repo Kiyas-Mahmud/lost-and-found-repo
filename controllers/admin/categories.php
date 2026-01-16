@@ -4,15 +4,18 @@
  * Handles category CRUD operations
  */
 
-require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/db.php';
-requireAdmin();
 
 class CategoriesController {
     private $db;
+    private $lastError = null;
     
     public function __construct() {
         $this->db = get_db_connection();
+    }
+    
+    public function getLastError() {
+        return $this->lastError;
     }
     
     public function getAllCategories() {
@@ -30,39 +33,58 @@ class CategoriesController {
     }
     
     public function addCategory($categoryName) {
-        $stmt = $this->db->prepare("
-            INSERT INTO categories (category_name, is_active) 
-            VALUES (:name, 1)
-        ");
-        
-        return $stmt->execute([':name' => $categoryName]);
+        try {
+            $stmt = $this->db->prepare("
+                INSERT INTO categories (category_name, is_active) 
+                VALUES (:name, 1)
+            ");
+            
+            $result = $stmt->execute([':name' => $categoryName]);
+            return $result;
+        } catch (Exception $e) {
+            $this->lastError = $e->getMessage();
+            return false;
+        }
     }
     
     public function toggleCategory($categoryId) {
-        $stmt = $this->db->prepare("
-            UPDATE categories 
-            SET is_active = NOT is_active 
-            WHERE category_id = :id
-        ");
-        
-        return $stmt->execute([':id' => $categoryId]);
+        try {
+            $stmt = $this->db->prepare("
+                UPDATE categories 
+                SET is_active = NOT is_active 
+                WHERE category_id = :id
+            ");
+            
+            $result = $stmt->execute([':id' => $categoryId]);
+            return $result;
+        } catch (Exception $e) {
+            $this->lastError = $e->getMessage();
+            return false;
+        }
     }
     
     public function deleteCategory($categoryId) {
-        // Check if category is in use
-        $stmt = $this->db->prepare("
-            SELECT COUNT(*) as count 
-            FROM items 
-            WHERE category_id = :id
-        ");
-        $stmt->execute([':id' => $categoryId]);
-        $count = $stmt->fetch(PDO::FETCH_OBJ)->count;
-        
-        if ($count > 0) {
-            return false; // Cannot delete category in use
+        try {
+            // Check if category is in use
+            $stmt = $this->db->prepare("
+                SELECT COUNT(*) as count 
+                FROM items 
+                WHERE category_id = :id
+            ");
+            $stmt->execute([':id' => $categoryId]);
+            $count = $stmt->fetch(PDO::FETCH_OBJ)->count;
+            
+            if ($count > 0) {
+                $this->lastError = 'Cannot delete category that is in use';
+                return false;
+            }
+            
+            $stmt = $this->db->prepare("DELETE FROM categories WHERE category_id = :id");
+            $result = $stmt->execute([':id' => $categoryId]);
+            return $result;
+        } catch (Exception $e) {
+            $this->lastError = $e->getMessage();
+            return false;
         }
-        
-        $stmt = $this->db->prepare("DELETE FROM categories WHERE category_id = :id");
-        return $stmt->execute([':id' => $categoryId]);
     }
 }

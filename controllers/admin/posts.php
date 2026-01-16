@@ -4,15 +4,18 @@
  * Handles post management (hide/unhide, search, filter)
  */
 
-require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/db.php';
-requireAdmin();
 
 class PostsController {
     private $db;
+    private $lastError = null;
     
     public function __construct() {
         $this->db = get_db_connection();
+    }
+    
+    public function getLastError() {
+        return $this->lastError;
     }
     
     public function getAllPosts($filters = [], $page = 1, $perPage = 20) {
@@ -85,23 +88,35 @@ class PostsController {
     }
     
     public function hidePost($itemId, $reason = '') {
-        $stmt = $this->db->prepare("
-            UPDATE items 
-            SET current_status = 'HIDDEN'
-            WHERE item_id = :item_id
-        ");
-        
-        return $stmt->execute([':item_id' => $itemId]);
+        try {
+            $stmt = $this->db->prepare("
+                UPDATE items 
+                SET current_status = 'HIDDEN'
+                WHERE item_id = :item_id
+            ");
+            
+            $result = $stmt->execute([':item_id' => $itemId]);
+            return $result;
+        } catch (Exception $e) {
+            $this->lastError = $e->getMessage();
+            return false;
+        }
     }
     
     public function unhidePost($itemId) {
-        $stmt = $this->db->prepare("
-            UPDATE items 
-            SET current_status = 'OPEN'
-            WHERE item_id = :item_id
-        ");
-        
-        return $stmt->execute([':item_id' => $itemId]);
+        try {
+            $stmt = $this->db->prepare("
+                UPDATE items 
+                SET current_status = 'OPEN'
+                WHERE item_id = :item_id
+            ");
+            
+            $result = $stmt->execute([':item_id' => $itemId]);
+            return $result;
+        } catch (Exception $e) {
+            $this->lastError = $e->getMessage();
+            return false;
+        }
     }
     
     public function deletePost($itemId) {
@@ -124,6 +139,7 @@ class PostsController {
             return true;
         } catch (Exception $e) {
             $this->db->rollBack();
+            $this->lastError = $e->getMessage();
             return false;
         }
     }

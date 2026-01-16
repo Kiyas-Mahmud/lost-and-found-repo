@@ -1,44 +1,9 @@
 <?php
-// Load controller
-require_once '../../controllers/admin/reports.php';
+// Check authentication
+require_once '../../config/session.php';
+requireAdmin();
 
 $pageTitle = 'Reports';
-
-// Initialize controller
-$controller = new ReportsController();
-
-// Handle report actions
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    $action = $_POST['action'];
-    $reportId = $_POST['report_id'] ?? null;
-    $resolution = $_POST['resolution'] ?? '';
-    
-    if ($reportId && $action === 'resolve') {
-        $controller->resolveReport($reportId, $resolution);
-        header('Location: reports.php?msg=resolve');
-        exit();
-    } elseif ($reportId && $action === 'dismiss') {
-        $controller->dismissReport($reportId, $resolution);
-        header('Location: reports.php?msg=dismiss');
-        exit();
-    }
-}
-
-// Get filters from request
-$filters = [
-    'status' => $_GET['status'] ?? 'OPEN'
-];
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-
-// Get data from controller
-$result = $controller->getAllReports($filters, $page, 15);
-$counts = $controller->getReportCounts();
-
-$reports = $result['reports'];
-$totalReports = $result['total'];
-$totalPages = $result['totalPages'];
-$openCount = $counts['open'];
-$resolvedCount = $counts['resolved'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -63,31 +28,33 @@ $resolvedCount = $counts['resolved'];
                         <p class="page-subtitle">Review and resolve reported content</p>
                     </div>
                     <div class="page-actions">
-                        <span class="badge-info"><?php echo $totalReports; ?> Total</span>
+                        <span class="badge-info" id="total-count">0 Total</span>
                     </div>
                 </div>
 
                 <!-- Status Tabs -->
                 <div class="status-tabs">
-                    <a href="reports.php?status=OPEN" 
-                       class="status-tab <?php echo $filters['status'] === 'OPEN' ? 'active' : ''; ?>">
+                    <a href="#" data-status="OPEN" class="status-tab active" id="tab-open">
                         <span class="tab-label">Open</span>
-                        <span class="tab-count"><?php echo $openCount; ?></span>
+                        <span class="tab-count" id="count-open">0</span>
                     </a>
-                    <a href="reports.php?status=RESOLVED" 
-                       class="status-tab <?php echo $filters['status'] === 'RESOLVED' ? 'active' : ''; ?>">
+                    <a href="#" data-status="RESOLVED" class="status-tab" id="tab-resolved">
                         <span class="tab-label">Resolved</span>
-                        <span class="tab-count"><?php echo $resolvedCount; ?></span>
+                        <span class="tab-count" id="count-resolved">0</span>
                     </a>
-                    <a href="reports.php?status=ALL" 
-                       class="status-tab <?php echo $filters['status'] === 'ALL' ? 'active' : ''; ?>">
+                    <a href="#" data-status="ALL" class="status-tab" id="tab-all">
                         <span class="tab-label">All</span>
                     </a>
                 </div>
 
                 <!-- Reports Table -->
                 <div class="admin-table-container">
-                    <?php if (count($reports) > 0): ?>
+                    <!-- Loading Spinner -->
+                    <div class="loading-spinner" id="loading-spinner">
+                        <i class="fas fa-circle-notch fa-spin fa-3x" style="color: #ff6b6b;"></i>
+                    </div>
+
+                    <div id="reports-container" style="display: none;">
                         <div class="table-wrapper">
                             <table class="admin-table">
                                 <thead>
@@ -102,85 +69,28 @@ $resolvedCount = $counts['resolved'];
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <?php foreach ($reports as $report): ?>
-                                        <tr>
-                                            <td><span class="text-mono">#<?php echo $report->report_id; ?></span></td>
-                                            <td>
-                                                <div class="table-item-title">
-                                                    <?php echo htmlspecialchars($report->item_title); ?>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span class="report-reason"><?php echo htmlspecialchars($report->reason); ?></span>
-                                            </td>
-                                            <td>
-                                                <div class="user-name"><?php echo htmlspecialchars($report->poster_name); ?></div>
-                                            </td>
-                                            <td>
-                                                <div class="table-user-info">
-                                                    <div class="user-name"><?php echo htmlspecialchars($report->reporter_name); ?></div>
-                                                    <div class="user-email"><?php echo htmlspecialchars($report->reporter_email); ?></div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="table-date">
-                                                    <?php echo date('M d, Y', strtotime($report->created_at)); ?>
-                                                    <span class="table-time"><?php echo date('h:i A', strtotime($report->created_at)); ?></span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <?php 
-                                                include '../components/admin/badge.php';
-                                                renderStatusBadge($report->report_status);
-                                                ?>
-                                            </td>
-                                            <td>
-                                                <div class="table-actions">
-                                                    <?php if ($report->report_status === 'OPEN'): ?>
-                                                        <button type="button" 
-                                                                class="btn-primary-sm" 
-                                                                onclick="openReviewModal(<?php echo $report->report_id; ?>, '<?php echo addslashes($report->item_title); ?>', '<?php echo addslashes($report->reason); ?>', '<?php echo addslashes($report->comment ?? ''); ?>')">
-                                                            Review
-                                                        </button>
-                                                    <?php else: ?>
-                                                        <button type="button" 
-                                                                class="btn-secondary-sm" 
-                                                                onclick="viewDetails(<?php echo $report->report_id; ?>)">
-                                                            View
-                                                        </button>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
+                                <tbody id="reports-tbody">
+                                    <!-- Reports will be loaded here via AJAX -->
                                 </tbody>
                             </table>
                         </div>
 
                         <!-- Pagination -->
-                        <?php 
-                        if ($totalPages > 1) {
-                            include '../components/admin/pagination.php';
-                            $baseUrl = 'reports.php?';
-                            if ($filters['status']) $baseUrl .= 'status=' . urlencode($filters['status']) . '&';
-                            renderPagination($page, $totalPages, $baseUrl);
-                        }
-                        ?>
-                    <?php else: ?>
-                        <!-- Empty State -->
-                        <div class="empty-state">
-                            <div class="empty-icon">
-                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                                    <line x1="12" y1="9" x2="12" y2="13"/>
-                                    <line x1="12" y1="17" x2="12.01" y2="17"/>
-                                </svg>
-                            </div>
-                            <h3 class="empty-title">No Reports Found</h3>
-                            <p class="empty-text">There are no reports in this category.</p>
+                        <div id="pagination-container"></div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div class="empty-state" id="empty-state" style="display: none;">
+                        <div class="empty-icon">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                <line x1="12" y1="9" x2="12" y2="13"/>
+                                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                            </svg>
                         </div>
-                    <?php endif; ?>
+                        <h3 class="empty-title">No Reports Found</h3>
+                        <p class="empty-text">There are no reports in this category.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -208,44 +118,235 @@ $resolvedCount = $counts['resolved'];
                     </div>
                 </div>
                 
-                <form method="POST" action="" id="reportForm">
+                <form id="reportForm">
                     <div class="form-group">
                         <label for="resolution_notes">Resolution Notes (Optional)</label>
                         <textarea id="resolution_notes" 
-                                  name="resolution" 
                                   class="form-control" 
                                   rows="3" 
                                   placeholder="Add notes about your decision..."></textarea>
                     </div>
-                    <input type="hidden" name="report_id" id="modalReportId">
-                    <input type="hidden" name="action" id="modalAction">
+                    <input type="hidden" id="modalReportId">
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="modal-btn-cancel" onclick="closeModal('reviewModal')">Cancel</button>
-                <button type="button" class="btn-dismiss" onclick="submitReport('dismiss')">Dismiss Report</button>
-                <button type="button" class="btn-resolve" onclick="submitReport('resolve')">Take Action & Resolve</button>
+                <button type="button" class="btn-dismiss" onclick="handleReportAction('dismiss')">Dismiss Report</button>
+                <button type="button" class="btn-resolve" onclick="handleReportAction('resolve')">Take Action & Resolve</button>
             </div>
         </div>
     </div>
 
     <script src="../../assets/js/main.js"></script>
     <script>
+        let currentPage = 1;
+        let currentStatus = 'OPEN';
+
+        // Load reports on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadReportCounts();
+            loadReports();
+
+            // Set up tab listeners
+            document.querySelectorAll('.status-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    // Update active tab
+                    document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Load reports with new status
+                    currentStatus = tab.dataset.status;
+                    currentPage = 1;
+                    loadReports();
+                });
+            });
+        });
+
+        async function loadReportCounts() {
+            try {
+                const response = await apiGet('../../api/admin/reports.php?counts=true');
+                if (response.success) {
+                    document.getElementById('count-open').textContent = response.data.open;
+                    document.getElementById('count-resolved').textContent = response.data.resolved;
+                }
+            } catch (error) {
+                console.error('Error loading report counts:', error);
+            }
+        }
+
+        async function loadReports() {
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const reportsContainer = document.getElementById('reports-container');
+            const emptyState = document.getElementById('empty-state');
+
+            // Show loading
+            loadingSpinner.style.display = 'flex';
+            reportsContainer.style.display = 'none';
+            emptyState.style.display = 'none';
+
+            try {
+                const params = new URLSearchParams({
+                    status: currentStatus,
+                    page: currentPage,
+                    perPage: 15
+                });
+
+                const response = await apiGet(`../../api/admin/reports.php?${params}`);
+
+                if (response.success) {
+                    const { reports, total, totalPages } = response.data;
+
+                    // Update total count
+                    document.getElementById('total-count').textContent = `${total} Total`;
+
+                    if (reports.length > 0) {
+                        renderReportsTable(reports);
+                        renderPagination(totalPages);
+                        reportsContainer.style.display = 'block';
+                    } else {
+                        emptyState.style.display = 'flex';
+                    }
+                } else {
+                    showToast(response.message || 'Failed to load reports', 'error');
+                    emptyState.style.display = 'flex';
+                }
+            } catch (error) {
+                console.error('Error loading reports:', error);
+                showToast('Error loading reports', 'error');
+                emptyState.style.display = 'flex';
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+        function renderReportsTable(reports) {
+            const tbody = document.getElementById('reports-tbody');
+            tbody.innerHTML = reports.map(report => {
+                const reportDate = new Date(report.created_at);
+                const formattedDate = reportDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const formattedTime = reportDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+                const statusBadge = report.report_status === 'OPEN' 
+                    ? '<span class="badge-warning">Open</span>' 
+                    : '<span class="badge-success">Resolved</span>';
+
+                const actionButton = report.report_status === 'OPEN'
+                    ? `<button type="button" class="btn-primary-sm" onclick="openReviewModal(${report.report_id}, '${escapeHtml(report.item_title).replace(/'/g, "\\'")}', '${escapeHtml(report.reason)}', '${escapeHtml(report.comment || '').replace(/'/g, "\\'")}')">Review</button>`
+                    : `<button type="button" class="btn-secondary-sm" disabled>Resolved</button>`;
+
+                return `
+                    <tr>
+                        <td><span class="text-mono">#${report.report_id}</span></td>
+                        <td>
+                            <div class="table-item-title">${escapeHtml(report.item_title)}</div>
+                        </td>
+                        <td>
+                            <span class="report-reason">${escapeHtml(report.reason)}</span>
+                        </td>
+                        <td>
+                            <div class="user-name">${escapeHtml(report.poster_name)}</div>
+                        </td>
+                        <td>
+                            <div class="table-user-info">
+                                <div class="user-name">${escapeHtml(report.reporter_name)}</div>
+                                <div class="user-email">${escapeHtml(report.reporter_email)}</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="table-date">
+                                ${formattedDate}
+                                <span class="table-time">${formattedTime}</span>
+                            </div>
+                        </td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <div class="table-actions">
+                                ${actionButton}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
         function openReviewModal(reportId, itemTitle, reason, description) {
             document.getElementById('modalReportId').value = reportId;
             document.getElementById('modalItemTitle').textContent = itemTitle;
             document.getElementById('modalReason').textContent = reason;
             document.getElementById('modalDescription').textContent = description || 'No additional details provided.';
+            document.getElementById('resolution_notes').value = '';
             openModal('reviewModal');
         }
 
-        function submitReport(action) {
-            document.getElementById('modalAction').value = action;
-            document.getElementById('reportForm').submit();
+        async function handleReportAction(action) {
+            const reportId = document.getElementById('modalReportId').value;
+            const resolution = document.getElementById('resolution_notes').value;
+
+            try {
+                const response = await apiPost('../../api/admin/reports.php', {
+                    action: action,
+                    report_id: reportId,
+                    resolution: resolution
+                });
+
+                if (response.success) {
+                    showToast(action === 'resolve' ? 'Report resolved successfully' : 'Report dismissed successfully', 'success');
+                    closeModal('reviewModal');
+                    loadReportCounts();
+                    loadReports();
+                } else {
+                    showToast(response.message || 'Failed to process report', 'error');
+                }
+            } catch (error) {
+                console.error('Error processing report:', error);
+                showToast('Error processing report', 'error');
+            }
         }
 
-        function viewDetails(reportId) {
-            alert('View report details: ' + reportId);
+        function renderPagination(totalPages) {
+            const container = document.getElementById('pagination-container');
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '<div class="pagination">';
+            
+            // Previous button
+            html += `<button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">
+                <i class="fas fa-chevron-left"></i>
+            </button>`;
+
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    html += '<span class="pagination-ellipsis">...</span>';
+                }
+            }
+
+            // Next button
+            html += `<button class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">
+                <i class="fas fa-chevron-right"></i>
+            </button>`;
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            loadReports();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
     </script>
 </body>
