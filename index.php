@@ -37,18 +37,19 @@ function route() {
     $routes = [
         // Public routes
         'home' => ['controller' => 'home', 'layout' => 'public'],
-        'browse' => ['controller' => 'home', 'action' => 'browse', 'layout' => 'public'],
-        'item_details' => ['controller' => 'home', 'action' => 'details', 'layout' => 'public'],
+        'browse' => ['view' => 'views/student/browse.php'],
+        'item_details' => ['view' => 'views/student/item_details.php'],
         'login' => ['controller' => 'auth', 'action' => 'login', 'layout' => 'public'],
         'register' => ['controller' => 'auth', 'action' => 'register', 'layout' => 'public'],
         'logout' => ['controller' => 'auth', 'action' => 'logout', 'layout' => 'public'],
         
         // Student routes
-        'student_dashboard' => ['controller' => 'student/dashboard', 'layout' => 'student', 'auth' => 'student'],
-        'post_lost' => ['controller' => 'student/item', 'action' => 'post_lost', 'layout' => 'student', 'auth' => 'student'],
-        'post_found' => ['controller' => 'student/item', 'action' => 'post_found', 'layout' => 'student', 'auth' => 'student'],
-        'my_posts' => ['controller' => 'student/dashboard', 'action' => 'my_posts', 'layout' => 'student', 'auth' => 'student'],
-        'my_claims' => ['controller' => 'student/claim', 'action' => 'my_claims', 'layout' => 'student', 'auth' => 'student'],
+        'student_dashboard' => ['view' => 'views/student/dashboard.php'],
+        'dashboard' => ['view' => 'views/student/dashboard.php'],
+        'post_lost' => ['view' => 'views/student/post_lost.php'],
+        'post_found' => ['view' => 'views/student/post_found.php'],
+        'my_posts' => ['view' => 'views/student/my_posts.php'],
+        'my_claims' => ['view' => 'views/student/my_claims.php'],
         'claim_item' => ['controller' => 'student/claim', 'action' => 'claim', 'layout' => 'student', 'auth' => 'student'],
         'notifications' => ['controller' => 'student/notification', 'layout' => 'student', 'auth' => 'student'],
         
@@ -79,6 +80,18 @@ function route() {
         } elseif ($route['auth'] === 'admin') {
             check_admin_auth();
         }
+    }
+    
+    // Check if route has direct view file
+    if (isset($route['view'])) {
+        $view_file = BASE_PATH . '/' . $route['view'];
+        if (file_exists($view_file)) {
+            include $view_file;
+        } else {
+            http_response_code(404);
+            echo "View not found: " . htmlspecialchars($route['view']);
+        }
+        return;
     }
     
     // Set controller and action
