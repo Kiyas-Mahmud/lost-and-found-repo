@@ -1,5 +1,6 @@
 <?php
 // Check authentication
+require_once '../../config/helpers.php';
 require_once '../../config/session.php';
 requireAdmin();
 
@@ -96,46 +97,7 @@ $pageTitle = 'Reports';
         </div>
     </div>
 
-    <!-- Review Report Modal -->
-    <div id="reviewModal" class="modal-overlay">
-        <div class="modal modal-large">
-            <div class="modal-header">
-                <h3 class="modal-title">Review Report</h3>
-            </div>
-            <div class="modal-body">
-                <div class="report-details">
-                    <div class="detail-row">
-                        <strong>Item:</strong>
-                        <span id="modalItemTitle"></span>
-                    </div>
-                    <div class="detail-row">
-                        <strong>Reason:</strong>
-                        <span id="modalReason" class="report-reason"></span>
-                    </div>
-                    <div class="detail-row">
-                        <strong>Description:</strong>
-                        <p id="modalDescription" class="report-description"></p>
-                    </div>
-                </div>
-                
-                <form id="reportForm">
-                    <div class="form-group">
-                        <label for="resolution_notes">Resolution Notes (Optional)</label>
-                        <textarea id="resolution_notes" 
-                                  class="form-control" 
-                                  rows="3" 
-                                  placeholder="Add notes about your decision..."></textarea>
-                    </div>
-                    <input type="hidden" id="modalReportId">
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="modal-btn-cancel" onclick="closeModal('reviewModal')">Cancel</button>
-                <button type="button" class="btn-dismiss" onclick="handleReportAction('dismiss')">Dismiss Report</button>
-                <button type="button" class="btn-resolve" onclick="handleReportAction('resolve')">Take Action & Resolve</button>
-            </div>
-        </div>
-    </div>
+    <?php include '../components/modals/review_report_modal.php'; ?>
 
     <script src="../../assets/js/main.js"></script>
     <script>

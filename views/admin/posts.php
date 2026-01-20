@@ -1,5 +1,6 @@
 <?php
 // Check authentication
+require_once '../../config/helpers.php';
 require_once '../../config/session.php';
 requireAdmin();
 
@@ -113,32 +114,7 @@ $pageTitle = 'All Posts';
         </div>
     </div>
 
-    <!-- Hide Post Modal -->
-    <div id="hideModal" class="modal-overlay">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">Hide Post</h3>
-            </div>
-            <form id="hideForm">
-                <div class="modal-body">
-                    <p>Are you sure you want to hide "<strong id="hideItemTitle"></strong>"? This post will no longer be visible to users.</p>
-                    <div class="form-group">
-                        <label for="hide_reason">Reason for Hiding (Required)</label>
-                        <textarea id="hide_reason" 
-                                  class="form-control" 
-                                  rows="3" 
-                                  required
-                                  placeholder="Explain why this post is being hidden..."></textarea>
-                    </div>
-                    <input type="hidden" id="hideItemId">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="modal-btn-cancel" onclick="closeModal('hideModal')">Cancel</button>
-                    <button type="submit" class="modal-btn-confirm btn-danger">Hide Post</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <?php include '../components/modals/hide_post_modal.php'; ?>
 
     <script src="../../assets/js/main.js"></script>
     <script>

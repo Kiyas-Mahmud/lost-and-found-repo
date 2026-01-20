@@ -1,5 +1,6 @@
 <?php
 // Check authentication
+require_once '../../config/helpers.php';
 require_once '../../config/session.php';
 requireAdmin();
 
@@ -240,59 +241,8 @@ if (!$claim) {
         </div>
     </div>
 
-    <!-- Approve Modal -->
-    <div id="approveModal" class="modal-overlay">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">Approve Claim</h3>
-            </div>
-            <form method="POST" action="">
-                <div class="modal-body">
-                    <p>Are you sure you want to approve this claim? This will mark the item as returned to the claimer.</p>
-                    <div class="form-group">
-                        <label for="approve_notes">Admin Notes (Optional)</label>
-                        <textarea id="approve_notes" 
-                                  name="admin_notes" 
-                                  class="form-control" 
-                                  rows="3" 
-                                  placeholder="Add any notes about this decision..."></textarea>
-                    </div>
-                    <input type="hidden" name="action" value="approve">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="modal-btn-cancel" onclick="closeModal('approveModal')">Cancel</button>
-                    <button type="submit" class="modal-btn-confirm">Approve Claim</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Reject Modal -->
-    <div id="rejectModal" class="modal-overlay">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">Reject Claim</h3>
-            </div>
-            <form method="POST" action="">
-                <div class="modal-body">
-                    <p>Are you sure you want to reject this claim? The item will remain available for other claims.</p>
-                    <div class="form-group">
-                        <label for="reject_notes">Reason for Rejection (Optional)</label>
-                        <textarea id="reject_notes" 
-                                  name="admin_notes" 
-                                  class="form-control" 
-                                  rows="3" 
-                                  placeholder="Explain why this claim is being rejected..."></textarea>
-                    </div>
-                    <input type="hidden" name="action" value="reject">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="modal-btn-cancel" onclick="closeModal('rejectModal')">Cancel</button>
-                    <button type="submit" class="modal-btn-confirm btn-danger">Reject Claim</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <?php include '../components/modals/approve_claim_modal.php'; ?>
+    <?php include '../components/modals/reject_claim_modal.php'; ?>
 
     <script src="../../assets/js/main.js"></script>
 </body>

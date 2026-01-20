@@ -1,5 +1,6 @@
 <?php
 // Check authentication
+require_once '../../config/helpers.php';
 require_once '../../config/session.php';
 requireAdmin();
 
@@ -123,32 +124,7 @@ $categories = $controller->getAllCategories();
         </div>
     </div>
 
-    <!-- Add Category Modal -->
-    <div id="addModal" class="modal-overlay">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">Add New Category</h3>
-            </div>
-            <form method="POST" action="">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="category_name">Category Name</label>
-                        <input type="text" 
-                               id="category_name" 
-                               name="category_name" 
-                               class="form-control" 
-                               required
-                               placeholder="Enter category name...">
-                    </div>
-                    <input type="hidden" name="action" value="add">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="modal-btn-cancel" onclick="closeModal('addModal')">Cancel</button>
-                    <button type="submit" class="modal-btn-confirm">Add Category</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <?php include '../components/modals/add_category_modal.php'; ?>
 
     <script src="../../assets/js/main.js"></script>
 </body>

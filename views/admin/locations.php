@@ -1,5 +1,6 @@
 <?php
 // Check authentication
+require_once '../../config/helpers.php';
 require_once '../../config/session.php';
 requireAdmin();
 
@@ -123,32 +124,7 @@ $locations = $controller->getAllLocations();
         </div>
     </div>
 
-    <!-- Add Location Modal -->
-    <div id="addModal" class="modal-overlay">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">Add New Location</h3>
-            </div>
-            <form method="POST" action="">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="location_name">Location Name</label>
-                        <input type="text" 
-                               id="location_name" 
-                               name="location_name" 
-                               class="form-control" 
-                               required
-                               placeholder="Enter location name...">
-                    </div>
-                    <input type="hidden" name="action" value="add">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="modal-btn-cancel" onclick="closeModal('addModal')">Cancel</button>
-                    <button type="submit" class="modal-btn-confirm">Add Location</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <?php include '../components/modals/add_location_modal.php'; ?>
 
     <script src="../../assets/js/main.js"></script>
 </body>

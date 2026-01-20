@@ -10,7 +10,22 @@ document.addEventListener("DOMContentLoaded", function () {
   initDropdowns();
   initFileUpload();
   initFormValidation();
+  initAOS();
 });
+
+/**
+ * Initialize AOS (Animate On Scroll)
+ */
+function initAOS() {
+  if (typeof AOS !== "undefined") {
+    AOS.init({
+      duration: 800,
+      easing: "ease-in-out",
+      once: true,
+      offset: 100,
+    });
+  }
+}
 
 /**
  * Navbar Mobile Toggle
@@ -59,21 +74,35 @@ function closeFlash() {
  * Initialize Dropdowns
  */
 function initDropdowns() {
-  const dropdowns = document.querySelectorAll(".dropdown");
+  // Get all dropdown toggles
+  const dropdownToggles = document.querySelectorAll(".dropdown-toggle");
 
-  dropdowns.forEach(function (dropdown) {
-    const toggle = dropdown.querySelector(".dropdown-toggle");
-    const menu = dropdown.querySelector(".dropdown-menu");
+  dropdownToggles.forEach(function (toggle) {
+    toggle.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
 
-    if (toggle && menu) {
-      // Mobile: toggle on click
-      if (window.innerWidth <= 768) {
-        toggle.addEventListener("click", function (e) {
-          e.preventDefault();
-          menu.style.display =
-            menu.style.display === "block" ? "none" : "block";
-        });
+      const dropdown = this.closest(".dropdown");
+      const isActive = dropdown.classList.contains("active");
+
+      // Close all dropdowns
+      document.querySelectorAll(".dropdown").forEach(function (d) {
+        d.classList.remove("active");
+      });
+
+      // Toggle current dropdown
+      if (!isActive) {
+        dropdown.classList.add("active");
       }
+    });
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest(".dropdown")) {
+      document.querySelectorAll(".dropdown").forEach(function (dropdown) {
+        dropdown.classList.remove("active");
+      });
     }
   });
 }
@@ -204,6 +233,12 @@ function formatDateTime(dateString) {
  */
 async function apiRequest(url, options = {}) {
   try {
+    // Prepend BASE_URL if URL starts with /
+    const fullUrl =
+      url.startsWith("/") && typeof BASE_URL !== "undefined"
+        ? BASE_URL + url
+        : url;
+
     const defaultOptions = {
       headers: {
         "Content-Type": "application/json",
@@ -212,7 +247,12 @@ async function apiRequest(url, options = {}) {
       credentials: "same-origin",
     };
 
-    const response = await fetch(url, { ...defaultOptions, ...options });
+    // If body is FormData, remove Content-Type header (browser will set it with boundary)
+    if (options.body instanceof FormData) {
+      delete defaultOptions.headers["Content-Type"];
+    }
+
+    const response = await fetch(fullUrl, { ...defaultOptions, ...options });
     const data = await response.json();
 
     if (!response.ok) {
@@ -237,20 +277,36 @@ async function apiGet(url) {
  * API POST request
  */
 async function apiPost(url, data) {
-  return apiRequest(url, {
+  const options = {
     method: "POST",
-    body: JSON.stringify(data),
-  });
+  };
+
+  // Handle FormData vs regular objects
+  if (data instanceof FormData) {
+    options.body = data;
+  } else {
+    options.body = JSON.stringify(data);
+  }
+
+  return apiRequest(url, options);
 }
 
 /**
  * API PUT request
  */
 async function apiPut(url, data) {
-  return apiRequest(url, {
+  const options = {
     method: "PUT",
-    body: JSON.stringify(data),
-  });
+  };
+
+  // Handle FormData vs regular objects
+  if (data instanceof FormData) {
+    options.body = data;
+  } else {
+    options.body = JSON.stringify(data);
+  }
+
+  return apiRequest(url, options);
 }
 
 /**
@@ -362,7 +418,7 @@ function initSearchFilter() {
             item.style.display = "none";
           }
         });
-      }, 300)
+      }, 300),
     );
   }
 }
@@ -419,7 +475,8 @@ function toggleSidebar() {
 function closeModal(modalId) {
   const modal = document.getElementById(modalId);
   if (modal) {
-    modal.classList.remove("active");
+    modal.classList.remove("show");
+    document.body.style.overflow = "";
   }
 }
 
@@ -427,14 +484,16 @@ function closeModal(modalId) {
 function openModal(modalId) {
   const modal = document.getElementById(modalId);
   if (modal) {
-    modal.classList.add("active");
+    modal.classList.add("show");
+    document.body.style.overflow = "hidden";
   }
 }
 
-// Close modal when clicking outside
+// Close modal when clicking on backdrop
 document.addEventListener("click", function (e) {
-  if (e.target.classList.contains("modal-overlay")) {
-    e.target.classList.remove("active");
+  if (e.target.classList.contains("modal-backdrop")) {
+    e.target.classList.remove("show");
+    document.body.style.overflow = "";
   }
 });
 
