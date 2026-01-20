@@ -2,24 +2,11 @@
 // Session configuration
 session_start();
 
-function isLoggedIn() {
-    return isset($_SESSION['user_id']);
-}
-
-function getUserId() {
-    return $_SESSION['user_id'] ?? null;
-}
-
-function getUserRole() {
-    return $_SESSION['role'] ?? null;
-}
-
-function isAdmin() {
-    return getUserRole() === 'ADMIN';
-}
+// Note: Core authentication functions (is_logged_in, is_admin, is_student, etc.) 
+// are now defined in helpers.php to avoid duplication
 
 function requireLogin() {
-    if (!isLoggedIn()) {
+    if (!is_logged_in()) {
         // Get the base path relative to current location
         $basePath = dirname($_SERVER['SCRIPT_NAME']);
         if (strpos($basePath, '/views/admin') !== false || strpos($basePath, '/views/student') !== false) {
@@ -35,7 +22,7 @@ function requireLogin() {
 
 function requireAdmin() {
     requireLogin();
-    if (!isAdmin()) {
+    if (!is_admin()) {
         // Get the base path relative to current location
         $basePath = dirname($_SERVER['SCRIPT_NAME']);
         if (strpos($basePath, '/views/admin') !== false) {
@@ -44,6 +31,19 @@ function requireAdmin() {
             header('Location: student/dashboard.php');
         } else {
             header('Location: views/student/dashboard.php');
+        }
+        exit();
+    }
+}
+
+function requireStudent() {
+    requireLogin();
+    if (!is_student()) {
+        // Redirect non-students to appropriate page
+        if (is_admin()) {
+            header('Location: ../admin/dashboard.php');
+        } else {
+            header('Location: ../login.php');
         }
         exit();
     }

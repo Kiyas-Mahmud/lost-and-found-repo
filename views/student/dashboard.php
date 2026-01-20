@@ -1,14 +1,19 @@
 <?php
-require_once '../../config/session.php';
-requireLogin();
+// Set page variable for navbar
+$page = 'dashboard';
 
-// Only allow students
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'STUDENT') {
-    header('Location: ../login.php');
-    exit;
+// Start session and check authentication
+if (!defined('BASE_PATH')) {
+    define('BASE_PATH', __DIR__ . '/../..');
 }
+require_once BASE_PATH . '/config/session.php';
+require_once BASE_PATH . '/config/helpers.php';
+
+// Require student authentication
+requireStudent();
 
 $userName = $_SESSION['full_name'] ?? 'Student';
+$userId = $_SESSION['user_id'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -17,70 +22,121 @@ $userName = $_SESSION['full_name'] ?? 'Student';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard - Lost & Found</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="dashboard-container">
-        <nav class="dashboard-nav">
-            <div class="nav-brand">
-                <h1 class="auth-logo">L&F</h1>
-            </div>
-            <div class="nav-links">
-                <a href="dashboard.php" class="nav-link active">Dashboard</a>
-                <a href="browse.php" class="nav-link">Browse Items</a>
-                <a href="my-items.php" class="nav-link">My Items</a>
-                <a href="my-claims.php" class="nav-link">My Claims</a>
-                <a href="../../logout.php" class="nav-link">Logout</a>
-            </div>
-        </nav>
-
-        <main class="dashboard-main">
-            <div class="welcome-section">
-                <h2>Welcome back, <?php echo htmlspecialchars($userName); ?>!</h2>
-                <p>Manage your lost and found items</p>
+    <?php include '../components/common/navbar_student.php'; ?>
+    
+    <div class="main-content">
+        <div class="container">
+            <!-- Welcome Header -->
+            <div class="page-header">
+                <div>
+                    <h1><i class="fas fa-home"></i> Welcome Back, <?php echo htmlspecialchars($userName); ?>!</h1>
+                    <p>Here's what's happening with your lost and found items today</p>
+                </div>
+                <a href="post_lost.php" class="btn btn-primary">
+                    <i class="fas fa-plus-circle"></i> Post Item
+                </a>
             </div>
 
-            <div class="dashboard-grid">
+            <!-- Statistics Cards -->
+            <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon">📦</div>
-                    <div class="stat-info">
-                        <h3>0</h3>
-                        <p>My Posted Items</p>
+                    <div class="stat-icon">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="totalPosts">0</div>
+                        <div class="stat-label">Total Posts</div>
+                        <div class="stat-description">Items you've posted</div>
                     </div>
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-icon">🔍</div>
-                    <div class="stat-info">
-                        <h3>0</h3>
-                        <p>My Claims</p>
+                    <div class="stat-icon">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="lostItems">0</div>
+                        <div class="stat-label">Lost Items</div>
+                        <div class="stat-description">Still searching for</div>
                     </div>
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-icon">✅</div>
-                    <div class="stat-info">
-                        <h3>0</h3>
-                        <p>Resolved Items</p>
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="foundItems">0</div>
+                        <div class="stat-label">Found Items</div>
+                        <div class="stat-description">Waiting to be claimed</div>
                     </div>
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-icon">🔔</div>
-                    <div class="stat-info">
-                        <h3>0</h3>
-                        <p>Notifications</p>
+                    <div class="stat-icon">
+                        <i class="fas fa-hand-paper"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="myClaims">0</div>
+                        <div class="stat-label">My Claims</div>
+                        <div class="stat-description">Items you've claimed</div>
                     </div>
                 </div>
             </div>
 
-            <div class="quick-actions">
-                <h3>Quick Actions</h3>
-                <div class="action-buttons">
-                    <a href="post-item.php" class="btn-primary">📝 Post Lost/Found Item</a>
-                    <a href="browse.php" class="btn-secondary">🔍 Browse Items</a>
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+                </div>
+                <div class="card-body">
+                    <div class="quick-actions-row">
+                        <a href="browse.php" class="action-button">
+                            <i class="fas fa-search"></i>
+                            <span>Browse Items</span>
+                        </a>
+                        
+                        <a href="post_lost.php" class="action-button">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Report Lost Item</span>
+                        </a>
+                        
+                        <a href="post_found.php" class="action-button">
+                            <i class="fas fa-hands-helping"></i>
+                            <span>Post Found Item</span>
+                        </a>
+                        
+                        <a href="my_posts.php" class="action-button">
+                            <i class="fas fa-list-alt"></i>
+                            <span>Manage Posts</span>
+                        </a>
+                    </div>
                 </div>
             </div>
-        </main>
+        </div>
     </div>
+
+    <script src="../../assets/js/main.js"></script>
+    <script>
+        // Load dashboard stats
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('../../api/student/dashboard.php');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('totalPosts').textContent = data.data.myItems || 0;
+                    document.getElementById('lostItems').textContent = data.data.lostItems || 0;
+                    document.getElementById('foundItems').textContent = data.data.foundItems || 0;
+                    document.getElementById('myClaims').textContent = data.data.totalClaims || 0;
+                }
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        });
+    </script>
 </body>
 </html>

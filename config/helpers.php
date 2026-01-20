@@ -111,10 +111,14 @@ function format_datetime($datetime) {
  * Get base URL
  */
 function base_url($path = '') {
+    // Use the BASE_URL constant defined in config.php for consistent URLs
+    if (defined('BASE_URL')) {
+        return BASE_URL . ($path ? '/' . $path : '');
+    }
+    // Fallback if BASE_URL is not defined
     $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
     $host = $_SERVER['HTTP_HOST'];
-    $base = dirname($_SERVER['SCRIPT_NAME']);
-    return $protocol . "://" . $host . $base . ($path ? '/' . $path : '');
+    return $protocol . "://" . $host . '/lost-and-found' . ($path ? '/' . $path : '');
 }
 
 /**
