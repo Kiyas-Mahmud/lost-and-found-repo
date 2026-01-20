@@ -1,8 +1,8 @@
-<?php include VIEWS_PATH . '/components/common/head.php'; ?>
+<?php include __DIR__ . '/../components/common/head.php'; ?>
 
-<?php include VIEWS_PATH . '/components/common/navbar_student.php'; ?>
+<?php include __DIR__ . '/../components/common/navbar_student.php'; ?>
 
-<?php include VIEWS_PATH . '/components/common/flash_message.php'; ?>
+<?php include __DIR__ . '/../components/common/flash_message.php'; ?>
 
 <main class="main-content student-content">
     <div class="container">
@@ -10,4 +10,4 @@
     </div>
 </main>
 
-<?php include VIEWS_PATH . '/components/common/footer.php'; ?>
+<?php include __DIR__ . '/../components/common/footer.php'; ?>

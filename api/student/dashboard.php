@@ -38,10 +38,20 @@ try {
     $stmt->execute([$userId]);
     $stats['approvedClaims'] = $stmt->fetch(PDO::FETCH_OBJ)->count;
     
-    // Unread notifications count
-    $stmt = $db->prepare("SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0");
+    // Total reports count
+    $stmt = $db->prepare("SELECT COUNT(*) as count FROM reports WHERE reported_by = ?");
     $stmt->execute([$userId]);
-    $stats['unreadNotifications'] = $stmt->fetch(PDO::FETCH_OBJ)->count;
+    $stats['totalReports'] = $stmt->fetch(PDO::FETCH_OBJ)->count;
+    
+    // Pending reports count
+    $stmt = $db->prepare("SELECT COUNT(*) as count FROM reports WHERE reported_by = ? AND report_status = 'OPEN'");
+    $stmt->execute([$userId]);
+    $stats['pendingReports'] = $stmt->fetch(PDO::FETCH_OBJ)->count;
+    
+    // Resolved reports count
+    $stmt = $db->prepare("SELECT COUNT(*) as count FROM reports WHERE reported_by = ? AND report_status = 'RESOLVED'");
+    $stmt->execute([$userId]);
+    $stats['resolvedReports'] = $stmt->fetch(PDO::FETCH_OBJ)->count;
     
     // My recent items
     $stmt = $db->prepare("
@@ -82,6 +92,41 @@ try {
     ");
     $stmt->execute([$userId]);
     $stats['recentClaims'] = $stmt->fetchAll(PDO::FETCH_OBJ);
+    
+    // My recent reports
+    $stmt = $db->prepare("
+        SELECT 
+            r.report_id,
+            r.reason,
+            r.report_status,
+            r.created_at,
+            i.item_id,
+            i.title as item_title,
+            i.item_type,
+            i.image_path
+        FROM reports r
+        JOIN items i ON r.item_id = i.item_id
+        WHERE r.reported_by = ?
+        ORDER BY r.created_at DESC
+        LIMIT 5
+    ");
+    $stmt->execute([$userId]);
+    $stats['recentReports'] = $stmt->fetchAll(PDO::FETCH_OBJ);
+    
+    // Total claims count (for the stat card)
+    $stmt = $db->prepare("SELECT COUNT(*) as count FROM claims WHERE claimed_by = ?");
+    $stmt->execute([$userId]);
+    $stats['totalClaims'] = $stmt->fetch(PDO::FETCH_OBJ)->count;
+    
+    // Lost items count
+    $stmt = $db->prepare("SELECT COUNT(*) as count FROM items WHERE posted_by = ? AND item_type = 'LOST'");
+    $stmt->execute([$userId]);
+    $stats['lostItems'] = $stmt->fetch(PDO::FETCH_OBJ)->count;
+    
+    // Found items count
+    $stmt = $db->prepare("SELECT COUNT(*) as count FROM items WHERE posted_by = ? AND item_type = 'FOUND'");
+    $stmt->execute([$userId]);
+    $stats['foundItems'] = $stmt->fetch(PDO::FETCH_OBJ)->count;
     
     // Send success response with data
     jsonSuccess($stats, 'Dashboard data loaded successfully');

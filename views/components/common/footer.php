@@ -43,6 +43,9 @@
     </div>
 </footer>
 
+<!-- AOS - Animate On Scroll -->
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
 <!-- Main JavaScript -->
 <script src="<?php echo asset_url('js/main.js'); ?>"></script>
 

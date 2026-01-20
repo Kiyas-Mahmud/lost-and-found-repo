@@ -12,7 +12,7 @@ if (strpos($_SERVER['PHP_SELF'], '/views/') !== false) {
 // Check if user is logged in
 $is_user_logged_in = isset($_SESSION['user_id']);
 // Check if we're on a student page
-$is_student_page = isset($page) && in_array($page, ['dashboard', 'browse', 'my_posts', 'my_claims', 'post_lost', 'post_found']);
+$is_student_page = isset($page) && in_array($page, ['dashboard', 'browse', 'my_posts', 'my_claims', 'my_reports', 'post_lost', 'post_found']);
 ?>
 <nav class="navbar navbar-student">
     <div class="container">
@@ -47,7 +47,6 @@ $is_student_page = isset($page) && in_array($page, ['dashboard', 'browse', 'my_p
                     
                     <li><a href="<?php echo $nav_base; ?>views/student/dashboard.php" class="<?php echo ($page ?? '') === 'dashboard' ? 'active' : ''; ?>">Dashboard</a></li>
                     <li><a href="<?php echo $nav_base; ?>views/student/my_posts.php" class="<?php echo ($page ?? '') === 'my_posts' ? 'active' : ''; ?>">My Posts</a></li>
-                    <li><a href="<?php echo $nav_base; ?>views/student/my_claims.php" class="<?php echo ($page ?? '') === 'my_claims' ? 'active' : ''; ?>">My Claims</a></li>
                     
                     <li class="dropdown">
                         <a href="#" class="dropdown-toggle">
@@ -55,6 +54,8 @@ $is_student_page = isset($page) && in_array($page, ['dashboard', 'browse', 'my_p
                         </a>
                         <ul class="dropdown-menu dropdown-menu-right">
                             <li><a href="<?php echo $nav_base; ?>views/student/dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                            <li><a href="<?php echo $nav_base; ?>views/student/my_claims.php"><i class="fas fa-hand-paper"></i> My Claims</a></li>
+                            <li><a href="<?php echo $nav_base; ?>views/student/my_reports.php"><i class="fas fa-flag"></i> My Reports</a></li>
                             <li class="divider"></li>
                             <li><a href="<?php echo $nav_base; ?>logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                         </ul>

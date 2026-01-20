@@ -57,6 +57,7 @@ if (!$item_id) {
     </main>
 
     <?php include '../components/modals/claim_modal.php'; ?>
+    <?php include '../components/modals/report_modal.php'; ?>
 
     <script>
         const BASE_URL = '<?= BASE_URL ?>';

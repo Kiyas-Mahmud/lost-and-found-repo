@@ -85,6 +85,17 @@ $userId = $_SESSION['user_id'];
                         <div class="stat-description">Items you've claimed</div>
                     </div>
                 </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-flag"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="myReports">0</div>
+                        <div class="stat-label">My Reports</div>
+                        <div class="stat-description">Reports submitted</div>
+                    </div>
+                </div>
             </div>
 
             <!-- Quick Actions -->
@@ -101,7 +112,7 @@ $userId = $_SESSION['user_id'];
                         
                         <a href="post_lost.php" class="action-button">
                             <i class="fas fa-exclamation-triangle"></i>
-                            <span>Report Lost Item</span>
+                            <span>Post Lost Item</span>
                         </a>
                         
                         <a href="post_found.php" class="action-button">
@@ -113,6 +124,19 @@ $userId = $_SESSION['user_id'];
                             <i class="fas fa-list-alt"></i>
                             <span>Manage Posts</span>
                         </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Reports -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-flag"></i> Recent Reports</h2>
+                    <a href="my_reports.php" class="btn btn-sm btn-outline">View All</a>
+                </div>
+                <div class="card-body">
+                    <div id="recentReportsContainer">
+                        <p class="text-muted text-center">Loading...</p>
                     </div>
                 </div>
             </div>
@@ -132,11 +156,68 @@ $userId = $_SESSION['user_id'];
                     document.getElementById('lostItems').textContent = data.data.lostItems || 0;
                     document.getElementById('foundItems').textContent = data.data.foundItems || 0;
                     document.getElementById('myClaims').textContent = data.data.totalClaims || 0;
+                    document.getElementById('myReports').textContent = data.data.totalReports || 0;
+                    
+                    // Load recent reports
+                    loadRecentReports(data.data.recentReports || []);
                 }
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
             }
         });
+
+        // Load recent reports into the container
+        function loadRecentReports(reports) {
+            const container = document.getElementById('recentReportsContainer');
+            
+            if (reports.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">No reports submitted yet.</p>';
+                return;
+            }
+
+            let html = '<div class="table-responsive"><table class="table"><thead><tr>' +
+                       '<th>Item</th><th>Reason</th><th>Status</th><th>Date</th><th>Action</th></tr></thead><tbody>';
+            
+            reports.forEach(report => {
+                const statusBadge = getReportStatusBadge(report.report_status);
+                const reasonText = formatReportReason(report.reason);
+                const dateText = new Date(report.created_at).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+
+                html += `<tr>
+                    <td><span class="badge badge-${report.item_type.toLowerCase()}">${report.item_type}</span> ${report.item_title}</td>
+                    <td>${reasonText}</td>
+                    <td>${statusBadge}</td>
+                    <td>${dateText}</td>
+                    <td><a href="item_details.php?id=${report.item_id}" class="btn btn-sm btn-outline"><i class="fas fa-eye"></i></a></td>
+                </tr>`;
+            });
+
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+
+        function getReportStatusBadge(status) {
+            const badges = {
+                'OPEN': '<span class="badge badge-warning"><i class="fas fa-clock"></i> Pending</span>',
+                'RESOLVED': '<span class="badge badge-success"><i class="fas fa-check"></i> Resolved</span>'
+            };
+            return badges[status] || '<span class="badge badge-secondary">' + status + '</span>';
+        }
+
+        function formatReportReason(reason) {
+            const reasons = {
+                'FAKE_POST': 'Fake Post',
+                'WRONG_INFO': 'Wrong Info',
+                'SPAM': 'Spam',
+                'SUSPICIOUS_CLAIM': 'Suspicious Claim',
+                'OTHER': 'Other'
+            };
+            return reasons[reason] || reason;
+        }
     </script>
 </body>
 </html>
