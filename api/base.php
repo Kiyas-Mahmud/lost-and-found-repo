@@ -85,6 +85,17 @@ function checkAdmin() {
 }
 
 /**
+ * Check if user is student
+ */
+function checkStudent() {
+    $session = checkAuth();
+    if ($session['role'] !== 'STUDENT') {
+        jsonError('Forbidden. Student access required.', 403);
+    }
+    return $session;
+}
+
+/**
  * Sanitize input
  */
 function sanitize($data) {

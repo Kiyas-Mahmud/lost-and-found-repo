@@ -5,5 +5,5 @@ require_once __DIR__ . '/controllers/auth.php';
 $controller = new AuthController();
 $result = $controller->logout();
 
-header('Location: views/' . $result['redirect']);
+header('Location: views/login.php');
 exit;

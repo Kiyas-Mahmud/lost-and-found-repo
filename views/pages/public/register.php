@@ -1,4 +1,4 @@
-<div class="container">
+<div class="auth-container">
     <div class="card">
         <div class="card-header">
             <h2><i class="fas fa-user-plus"></i> Register</h2>

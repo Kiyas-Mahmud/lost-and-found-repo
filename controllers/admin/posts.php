@@ -119,6 +119,35 @@ class PostsController {
         }
     }
     
+    public function markAsReturned($itemId) {
+        try {
+            // Check if item status is APPROVED before marking as RETURNED
+            $checkStmt = $this->db->prepare("
+                SELECT current_status FROM items WHERE item_id = :item_id
+            ");
+            $checkStmt->execute([':item_id' => $itemId]);
+            $item = $checkStmt->fetch(PDO::FETCH_OBJ);
+            
+            if (!$item) {
+                $this->lastError = 'Item not found';
+                return false;
+            }
+            
+            // Update item status to RETURNED
+            $stmt = $this->db->prepare("
+                UPDATE items 
+                SET current_status = 'RETURNED'
+                WHERE item_id = :item_id
+            ");
+            
+            $result = $stmt->execute([':item_id' => $itemId]);
+            return $result;
+        } catch (Exception $e) {
+            $this->lastError = $e->getMessage();
+            return false;
+        }
+    }
+    
     public function deletePost($itemId) {
         try {
             $this->db->beginTransaction();

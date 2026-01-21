@@ -1,4 +1,5 @@
 <?php
+require_once '../../config/helpers.php';
 require_once '../../config/session.php';
 requireAdmin();
 $pageTitle = 'Dashboard';

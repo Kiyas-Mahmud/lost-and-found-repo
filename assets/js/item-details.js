@@ -7,6 +7,7 @@ let itemData = null;
 document.addEventListener("DOMContentLoaded", function () {
   loadItemDetails();
   setupClaimForm();
+  setupReportForm();
   setupModalEvents();
 });
 
@@ -128,6 +129,7 @@ function displayItemDetails(item) {
                         <i class="fas fa-clock"></i>
                         Posted ${postedDate}
                     </span>
+                    <div class="item-actions-buttons">
                     ${
                       canClaim
                         ? `
@@ -136,12 +138,12 @@ function displayItemDetails(item) {
                         </button>
                     `
                         : !IS_LOGGED_IN
-                        ? `
+                          ? `
                         <a href="../login.php" class="btn btn-primary">
                             <i class="fas fa-sign-in-alt"></i> Login to Claim
                         </a>
                     `
-                        : `
+                          : `
                         <button class="btn btn-secondary" disabled>
                             <i class="fas fa-info-circle"></i> ${
                               item.current_status === "CLAIM_PENDING"
@@ -151,6 +153,16 @@ function displayItemDetails(item) {
                         </button>
                     `
                     }
+                    ${
+                      IS_LOGGED_IN
+                        ? `
+                        <button class="btn btn-outline-danger" onclick="openReportModal()" style="margin-left: 10px;">
+                            <i class="fas fa-flag"></i> Report
+                        </button>
+                    `
+                        : ""
+                    }
+                    </div>
                 </div>
             </div>
         </div>
@@ -232,7 +244,7 @@ function setupClaimForm() {
     if (proofDescription.length < 20) {
       showClaimAlert(
         "Please provide a more detailed proof (at least 20 characters)",
-        "error"
+        "error",
       );
       return;
     }
@@ -275,6 +287,128 @@ function setupClaimForm() {
  */
 function showClaimAlert(message, type) {
   const container = document.getElementById("claimAlertContainer");
+  const alertClass = type === "success" ? "alert-success" : "alert-error";
+
+  container.innerHTML = `
+        <div class="alert ${alertClass}">
+            <i class="fas fa-${
+              type === "success" ? "check-circle" : "exclamation-circle"
+            }"></i>
+            <span>${message}</span>
+        </div>
+    `;
+}
+
+/**
+ * Open report modal
+ */
+function openReportModal() {
+  const modal = document.getElementById("reportModal");
+  document.getElementById("reportItemId").value = ITEM_ID;
+  document.getElementById("reportReason").value = "";
+  document.getElementById("reportComment").value = "";
+  document.getElementById("reportAlertContainer").innerHTML = "";
+  modal.classList.add("show");
+  document.body.style.overflow = "hidden";
+}
+
+/**
+ * Close report modal
+ */
+function closeReportModal() {
+  const modal = document.getElementById("reportModal");
+  modal.classList.remove("show");
+  document.body.style.overflow = "";
+}
+
+/**
+ * Setup report form submission
+ */
+function setupReportForm() {
+  const form = document.getElementById("reportForm");
+  if (!form) return;
+
+  // Setup modal events for report modal
+  const modal = document.getElementById("reportModal");
+  if (modal) {
+    // Close on backdrop click
+    modal.addEventListener("click", function (e) {
+      if (e.target === modal) {
+        closeReportModal();
+      }
+    });
+
+    // Close on escape key
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && modal.classList.contains("show")) {
+        closeReportModal();
+      }
+    });
+  }
+
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const reason = document.getElementById("reportReason").value;
+    const comment = document.getElementById("reportComment").value.trim();
+    const alertContainer = document.getElementById("reportAlertContainer");
+
+    // Validate
+    if (!reason) {
+      showReportAlert("Please select a reason for reporting", "error");
+      return;
+    }
+
+    if (reason === "OTHER" && comment.length < 10) {
+      showReportAlert(
+        "Please provide more details (at least 10 characters)",
+        "error",
+      );
+      return;
+    }
+
+    // Submit
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML =
+      '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+    try {
+      const formData = new FormData();
+      formData.append("item_id", ITEM_ID);
+      formData.append("reason", reason);
+      formData.append("comment", comment);
+
+      const response = await apiPost(
+        "/api/student/submit_report.php",
+        formData,
+      );
+
+      if (response.success) {
+        showReportAlert("Report submitted successfully!", "success");
+        setTimeout(() => {
+          closeReportModal();
+          // Optionally reload or show confirmation
+        }, 2000);
+      } else {
+        showReportAlert(response.message || "Failed to submit report", "error");
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-flag"></i> Submit Report';
+      }
+    } catch (error) {
+      console.error("Error submitting report:", error);
+      showReportAlert("An error occurred. Please try again.", "error");
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-flag"></i> Submit Report';
+    }
+  });
+}
+
+/**
+ * Show alert in report modal
+ */
+function showReportAlert(message, type) {
+  const container = document.getElementById("reportAlertContainer");
   const alertClass = type === "success" ? "alert-success" : "alert-error";
 
   container.innerHTML = `

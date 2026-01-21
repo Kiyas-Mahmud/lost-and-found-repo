@@ -66,6 +66,14 @@ elseif ($method === 'POST') {
                 jsonError('Failed to unhide post: ' . $posts->getLastError(), 500);
             }
         } 
+        elseif ($action === 'markReturned') {
+            $success = $posts->markAsReturned($itemId);
+            if ($success) {
+                jsonSuccess([], 'Item marked as returned successfully');
+            } else {
+                jsonError('Failed to mark item as returned: ' . $posts->getLastError(), 500);
+            }
+        }
         elseif ($action === 'delete') {
             $success = $posts->deletePost($itemId);
             if ($success) {

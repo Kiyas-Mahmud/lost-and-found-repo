@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     <?php endif; ?>
 
-    <div class="container">
+    <div class="auth-container">
         <div class="auth-box">
             <div class="auth-header">
                 <div class="auth-logo">L&F</div>

@@ -89,6 +89,7 @@ class ClaimsController {
                     i.item_type,
                     i.event_date,
                     i.image_path,
+                    i.posted_by,
                     cat.category_name,
                     loc.location_name,
                     u.full_name as claimer_name,
@@ -152,6 +153,9 @@ class ClaimsController {
     
     public function rejectClaim($claimId, $adminNote = '', $adminId = null) {
         try {
+            $this->db->beginTransaction();
+            
+            // Update claim status to REJECTED
             $stmt = $this->db->prepare("
                 UPDATE claims 
                 SET claim_status = 'REJECTED',
@@ -161,14 +165,25 @@ class ClaimsController {
                 WHERE claim_id = :claim_id
             ");
             
-            $result = $stmt->execute([
+            $stmt->execute([
                 ':admin_note' => $adminNote,
                 ':admin_id' => $adminId,
                 ':claim_id' => $claimId
             ]);
             
-            return $result;
+            // Update item status back to OPEN
+            $stmt = $this->db->prepare("
+                UPDATE items i
+                JOIN claims c ON i.item_id = c.item_id
+                SET i.current_status = 'OPEN'
+                WHERE c.claim_id = :claim_id
+            ");
+            $stmt->execute([':claim_id' => $claimId]);
+            
+            $this->db->commit();
+            return true;
         } catch (Exception $e) {
+            $this->db->rollBack();
             $this->lastError = $e->getMessage();
             return false;
         }

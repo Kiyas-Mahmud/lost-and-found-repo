@@ -31,7 +31,7 @@
                         <i class="fas fa-user-shield"></i> <?php echo $_SESSION['full_name'] ?? 'Admin'; ?>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-right">
-                        <li><a href="index.php?page=logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                        <li><a href="../../logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                     </ul>
                 </li>
             </ul>

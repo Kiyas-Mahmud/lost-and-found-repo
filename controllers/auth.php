@@ -127,7 +127,7 @@ class AuthController {
         return [
             'success' => true,
             'message' => 'Logged out successfully',
-            'redirect' => 'login.php'
+            'redirect' => 'index.php?page=login'
         ];
     }
     
@@ -155,3 +155,11 @@ class AuthController {
     }
 }
 
+/**
+ * Logout function for router
+ */
+function logout() {
+    session_unset();
+    session_destroy();
+    redirect('login');
+}

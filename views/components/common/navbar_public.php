@@ -1,9 +1,8 @@
 <nav class="navbar navbar-public">
     <div class="container">
         <div class="navbar-brand">
-            <a href="index.php?page=home">
-                <i class="fas fa-search"></i>
-                <span>Lost & Found</span>
+            <a href="index.php">
+                <span class="logo-text">L&F</span>
             </a>
         </div>
         
@@ -14,14 +13,14 @@
                 
                 <?php if (is_logged_in()): ?>
                     <?php if (is_student()): ?>
-                        <li><a href="index.php?page=student_dashboard">Dashboard</a></li>
+                        <li class="nav-link-item"><a href="index.php?page=student_dashboard">Dashboard</a></li>
                     <?php elseif (is_admin()): ?>
-                        <li><a href="index.php?page=admin_dashboard">Admin Panel</a></li>
+                        <li class="nav-link-item"><a href="index.php?page=admin_dashboard">Admin Panel</a></li>
                     <?php endif; ?>
-                    <li><a href="index.php?page=logout" class="btn btn-outline">Logout</a></li>
+                    <li class="nav-btn-item"><a href="logout.php" class="btn btn-outline">Logout</a></li>
                 <?php else: ?>
-                    <li><a href="index.php?page=login" class="btn btn-outline">Login</a></li>
-                    <li><a href="index.php?page=register" class="btn btn-primary">Register</a></li>
+                    <li class="nav-btn-item"><a href="index.php?page=login" class="btn btn-outline">Login</a></li>
+                    <li class="nav-btn-item"><a href="index.php?page=register" class="btn btn-primary">Register</a></li>
                 <?php endif; ?>
             </ul>
         </div>
