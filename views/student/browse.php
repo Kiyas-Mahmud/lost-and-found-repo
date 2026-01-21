@@ -42,7 +42,7 @@ $userName = $_SESSION['full_name'] ?? 'Guest';
             <div class="filter-bar">
                 <div class="search-box-wrapper">
                     <i class="fas fa-search search-icon"></i>
-                    <input type="text" id="searchKeyword" class="search-input" placeholder="Search by keyword, title, or description...">
+                    <input type="text" id="searchKeyword" class="search-input" placeholder="Search by keyword, title, or description..." value="<?php echo htmlspecialchars($_GET['keyword'] ?? ''); ?>">
                 </div>
 
                 <div class="filter-chips">
@@ -134,6 +134,14 @@ $userName = $_SESSION['full_name'] ?? 'Guest';
         document.addEventListener('DOMContentLoaded', function() {
             loadCategories();
             loadLocations();
+            
+            // Check if there's a keyword from URL parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const keyword = urlParams.get('keyword');
+            if (keyword) {
+                document.getElementById('searchKeyword').value = keyword;
+            }
+            
             loadItems();
 
             // Add event listeners for all filters

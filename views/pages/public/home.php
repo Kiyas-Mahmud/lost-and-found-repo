@@ -18,27 +18,11 @@
                     Fast, secure, and verified by university administration.
                 </p>
                 
-                <!-- Quick Search -->
-                <form id="quickSearchForm" class="home-hero-search">
-                    <div class="home-search-wrapper">
-                        <i class="fas fa-search"></i>
-                        <input type="text" name="keyword" placeholder="Search for lost items..." class="home-search-input">
-                    </div>
-                    <button type="submit" class="home-btn-search">
-                        <span>Search</span>
-                        <i class="fas fa-arrow-right"></i>
-                    </button>
-                </form>
-                
                 <!-- CTA Buttons -->
                 <div class="home-hero-actions">
                     <a href="views/student/browse.php" class="btn btn-primary">
                         <i class="fas fa-compass"></i>
                         Browse Items
-                    </a>
-                    <a href="views/login.php" class="home-btn-secondary">
-                        <i class="fas fa-plus-circle"></i>
-                        Post Item
                     </a>
                 </div>
                 
@@ -239,10 +223,6 @@
                 </p>
             </div>
             <div class="home-cta-actions">
-                <a href="views/login.php" class="home-btn-white">
-                    <i class="fas fa-plus-circle"></i>
-                    Post Lost Item
-                </a>
                 <a href="views/student/browse.php" class="home-btn-outline-white">
                     <i class="fas fa-search"></i>
                     Browse Items
