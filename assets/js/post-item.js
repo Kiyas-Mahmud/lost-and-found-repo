@@ -4,6 +4,7 @@
  */
 
 document.addEventListener("DOMContentLoaded", function () {
+  console.log("Post item script loaded");
   loadCategories();
   loadLocations();
   setupImageUpload();
@@ -13,7 +14,7 @@ document.addEventListener("DOMContentLoaded", function () {
 // Load categories from API
 async function loadCategories() {
   try {
-    const response = await apiGet("/api/public/categories.php");
+    const response = await apiGet("../../api/public/categories.php");
     if (response.success) {
       const select = document.getElementById("category");
       response.data.forEach((cat) => {
@@ -31,7 +32,7 @@ async function loadCategories() {
 // Load locations from API
 async function loadLocations() {
   try {
-    const response = await apiGet("/api/public/locations.php");
+    const response = await apiGet("../../api/public/locations.php");
     if (response.success) {
       const select = document.getElementById("location");
       response.data.forEach((loc) => {
@@ -142,13 +143,24 @@ function validateAndPreviewImage(file) {
 function setupFormSubmission() {
   const form = document.getElementById("postItemForm");
 
+  console.log("Setting up form submission, form:", form);
+
+  if (!form) {
+    console.error("Form with id 'postItemForm' not found!");
+    return;
+  }
+
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
+    console.log("Form submitted");
 
     // Validate form
     if (!validateForm()) {
+      console.log("Form validation failed");
       return;
     }
+
+    console.log("Form validation passed");
 
     // Disable submit button
     const submitBtn = document.getElementById("submitBtn");
@@ -161,12 +173,29 @@ function setupFormSubmission() {
       const formData = new FormData(form);
 
       // Submit form
-      const response = await fetch(`${BASE_URL}/api/student/post_item.php`, {
+      const response = await fetch("../../api/student/post_item.php", {
         method: "POST",
         body: formData,
       });
 
-      const result = await response.json();
+      // Check if response is ok
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Get response text first for debugging
+      const text = await response.text();
+      console.log("Response:", text);
+
+      let result;
+      try {
+        result = JSON.parse(text);
+      } catch (e) {
+        console.error("JSON Parse Error:", e);
+        throw new Error(
+          "Server returned invalid JSON. Check console for details.",
+        );
+      }
 
       if (result.success) {
         showAlert("success", result.message || "Item posted successfully!");
@@ -176,14 +205,14 @@ function setupFormSubmission() {
       } else {
         showAlert(
           "error",
-          result.message || "Failed to post item. Please try again."
+          result.message || "Failed to post item. Please try again.",
         );
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
       }
     } catch (error) {
       console.error("Error:", error);
-      showAlert("error", "An error occurred. Please try again.");
+      showAlert("error", "An error occurred: " + error.message);
       submitBtn.disabled = false;
       submitBtn.innerHTML = originalText;
     }
@@ -247,6 +276,7 @@ function validateForm() {
   } else {
     const selectedDate = new Date(eventDate);
     const today = new Date();
+    selectedDate.setHours(0, 0, 0, 0);
     today.setHours(0, 0, 0, 0);
 
     if (selectedDate > today) {

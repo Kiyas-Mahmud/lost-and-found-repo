@@ -54,6 +54,7 @@ $is_student_page = isset($page) && in_array($page, ['dashboard', 'browse', 'my_p
                         </a>
                         <ul class="dropdown-menu dropdown-menu-right">
                             <li><a href="<?php echo $nav_base; ?>views/student/dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                            <li><a href="<?php echo $nav_base; ?>views/student/profile.php"><i class="fas fa-user"></i> Profile</a></li>
                             <li><a href="<?php echo $nav_base; ?>views/student/my_claims.php"><i class="fas fa-hand-paper"></i> My Claims</a></li>
                             <li><a href="<?php echo $nav_base; ?>views/student/my_reports.php"><i class="fas fa-flag"></i> My Reports</a></li>
                             <li class="divider"></li>

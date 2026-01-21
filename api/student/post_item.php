@@ -43,7 +43,10 @@ if (!in_array($_POST['item_type'], ['LOST', 'FOUND'])) {
 
 // Validate date (should not be in the future)
 $eventDate = $_POST['event_date'];
-if (strtotime($eventDate) > time()) {
+$eventTimestamp = strtotime($eventDate . ' 00:00:00');
+$todayTimestamp = strtotime(date('Y-m-d') . ' 00:00:00');
+
+if ($eventTimestamp > $todayTimestamp) {
     jsonError('Event date cannot be in the future', 400);
 }
 

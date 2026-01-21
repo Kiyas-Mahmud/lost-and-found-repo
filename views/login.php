@@ -93,10 +93,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </form>
             
             <p class="auth-footer">
-                Don't have an account? <a href="register.php">Create account</a>
+                Don't have an account? <a href="register.php">Create account</a><br>
+                <a href="#" id="forgotPasswordLink" style="font-size: 0.9em; color: #4f46e5; text-decoration: none; margin-top: 0.5rem; display: inline-block;">Forgot Password?</a>
             </p>
         </div>
     </div>
+
+    <?php include __DIR__ . '/components/modals/forgot_password_modal.php'; ?>
 
     <script>
         <?php if ($registered): ?>
@@ -218,6 +221,134 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             input.classList.remove('input-error');
             errorElement.textContent = '';
             errorElement.style.display = 'none';
+        }
+
+        // Forgot Password Modal
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+        const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+        const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+
+        forgotPasswordLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            openForgotPasswordModal();
+        });
+
+        function openForgotPasswordModal() {
+            forgotPasswordModal.classList.add('show');
+            document.getElementById('resetMessage').style.display = 'none';
+            forgotPasswordForm.reset();
+            clearError('resetEmail');
+            clearError('newPassword');
+            clearError('confirmNewPassword');
+        }
+
+        function closeForgotPasswordModal() {
+            forgotPasswordModal.classList.remove('show');
+        }
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(e) {
+            if (e.target === forgotPasswordModal) {
+                closeForgotPasswordModal();
+            }
+        });
+
+        // Forgot Password Form Validation
+        const resetEmailInput = document.getElementById('resetEmail');
+        const newPasswordInput = document.getElementById('newPassword');
+        const confirmNewPasswordInput = document.getElementById('confirmNewPassword');
+
+        resetEmailInput.addEventListener('input', function() {
+            if (this.value.trim()) clearError('resetEmail');
+        });
+
+        newPasswordInput.addEventListener('input', function() {
+            if (this.value) clearError('newPassword');
+        });
+
+        confirmNewPasswordInput.addEventListener('input', function() {
+            if (this.value) clearError('confirmNewPassword');
+        });
+
+        forgotPasswordForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = resetEmailInput.value.trim();
+            const newPassword = newPasswordInput.value;
+            const confirmPassword = confirmNewPasswordInput.value;
+
+            // Validation
+            let isValid = true;
+
+            if (!email) {
+                showError('resetEmail', 'Email is required');
+                isValid = false;
+            } else if (!isValidEmail(email)) {
+                showError('resetEmail', 'Please enter a valid email address');
+                isValid = false;
+            }
+
+            if (!newPassword) {
+                showError('newPassword', 'New password is required');
+                isValid = false;
+            } else if (newPassword.length < 6) {
+                showError('newPassword', 'Password must be at least 6 characters');
+                isValid = false;
+            }
+
+            if (!confirmPassword) {
+                showError('confirmNewPassword', 'Please confirm your password');
+                isValid = false;
+            } else if (newPassword !== confirmPassword) {
+                showError('confirmNewPassword', 'Passwords do not match');
+                isValid = false;
+            }
+
+            if (!isValid) return;
+
+            // Submit via AJAX
+            const formData = new FormData();
+            formData.append('email', email);
+            formData.append('new_password', newPassword);
+
+            fetch('../api/public/reset_password.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const messageDiv = document.getElementById('resetMessage');
+                messageDiv.style.display = 'block';
+                
+                if (data.success) {
+                    messageDiv.className = 'alert alert-success';
+                    messageDiv.textContent = data.message;
+                    
+                    // Reset form and close modal after 2 seconds
+                    setTimeout(() => {
+                        closeForgotPasswordModal();
+                    }, 2000);
+                } else {
+                    messageDiv.className = 'alert alert-error';
+                    messageDiv.textContent = data.message;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const messageDiv = document.getElementById('resetMessage');
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'alert alert-error';
+                messageDiv.textContent = 'An error occurred. Please try again. ' + error.message;
+            });
+        });
+
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
         }
     </script>
 </body>
