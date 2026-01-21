@@ -59,7 +59,7 @@ class AuthController {
         $_SESSION['email'] = $userData->email;
         
         // Determine redirect URL based on role
-        $redirectUrl = ($userData->role === 'ADMIN') 
+        $redirectUrl = (in_array($userData->role, ['ADMIN', 'ADMINISTRATOR', 'MODERATOR', 'STAFF'])) 
             ? 'admin/dashboard.php' 
             : 'student/dashboard.php';
         

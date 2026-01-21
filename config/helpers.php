@@ -19,10 +19,10 @@ function is_student() {
 }
 
 /**
- * Check if user is admin
+ * Check if user is admin (includes ADMINISTRATOR, MODERATOR, STAFF)
  */
 function is_admin() {
-    return isset($_SESSION['role']) && $_SESSION['role'] === 'ADMIN';
+    return isset($_SESSION['role']) && in_array($_SESSION['role'], ['ADMIN', 'ADMINISTRATOR', 'MODERATOR', 'STAFF']);
 }
 
 /**

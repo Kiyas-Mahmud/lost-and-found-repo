@@ -18,16 +18,38 @@ class CategoriesController {
         return $this->lastError;
     }
     
-    public function getAllCategories() {
-        $stmt = $this->db->query("
+    public function getAllCategories($search = '', $statusFilter = 'all') {
+        $query = "
             SELECT 
                 c.*,
                 COUNT(i.item_id) as item_count
             FROM categories c
             LEFT JOIN items i ON c.category_id = i.category_id
+            WHERE 1=1
+        ";
+        
+        $params = [];
+        
+        // Apply search filter
+        if (!empty($search)) {
+            $query .= " AND c.category_name LIKE :search";
+            $params[':search'] = '%' . $search . '%';
+        }
+        
+        // Apply status filter
+        if ($statusFilter === 'active') {
+            $query .= " AND c.is_active = 1";
+        } elseif ($statusFilter === 'inactive') {
+            $query .= " AND c.is_active = 0";
+        }
+        
+        $query .= "
             GROUP BY c.category_id
             ORDER BY c.category_name ASC
-        ");
+        ";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->execute($params);
         
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
@@ -60,6 +82,36 @@ class CategoriesController {
         } catch (Exception $e) {
             $this->lastError = $e->getMessage();
             return false;
+        }
+    }
+    
+    public function updateCategory($categoryId, $categoryName) {
+        try {
+            $stmt = $this->db->prepare("
+                UPDATE categories 
+                SET category_name = :name
+                WHERE category_id = :id
+            ");
+            
+            $result = $stmt->execute([
+                ':name' => $categoryName,
+                ':id' => $categoryId
+            ]);
+            return $result;
+        } catch (Exception $e) {
+            $this->lastError = $e->getMessage();
+            return false;
+        }
+    }
+    
+    public function getCategoryById($categoryId) {
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM categories WHERE category_id = :id");
+            $stmt->execute([':id' => $categoryId]);
+            return $stmt->fetch(PDO::FETCH_OBJ);
+        } catch (Exception $e) {
+            $this->lastError = $e->getMessage();
+            return null;
         }
     }
     

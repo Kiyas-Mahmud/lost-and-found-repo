@@ -63,6 +63,36 @@ class LocationsController {
         }
     }
     
+    public function updateLocation($locationId, $locationName) {
+        try {
+            $stmt = $this->db->prepare("
+                UPDATE locations 
+                SET location_name = :name
+                WHERE location_id = :id
+            ");
+            
+            $result = $stmt->execute([
+                ':name' => $locationName,
+                ':id' => $locationId
+            ]);
+            return $result;
+        } catch (Exception $e) {
+            $this->lastError = $e->getMessage();
+            return false;
+        }
+    }
+    
+    public function getLocationById($locationId) {
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM locations WHERE location_id = :id");
+            $stmt->execute([':id' => $locationId]);
+            return $stmt->fetch(PDO::FETCH_OBJ);
+        } catch (Exception $e) {
+            $this->lastError = $e->getMessage();
+            return null;
+        }
+    }
+    
     public function deleteLocation($locationId) {
         try {
             // Check if location is in use

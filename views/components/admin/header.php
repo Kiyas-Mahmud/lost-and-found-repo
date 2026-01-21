@@ -3,18 +3,6 @@
         <h2 class="page-title"><?php echo $pageTitle ?? 'Admin Panel'; ?></h2>
     </div>
     
-    <div class="header-center">
-        <div class="header-search">
-            <span class="search-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"/>
-                    <path d="m21 21-4.35-4.35"/>
-                </svg>
-            </span>
-            <input type="text" placeholder="Search..." class="search-input" id="globalSearch">
-        </div>
-    </div>
-    
     <div class="header-right">
         <div class="header-actions">
             <div class="profile-dropdown">

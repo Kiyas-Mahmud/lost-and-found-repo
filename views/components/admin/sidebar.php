@@ -75,6 +75,18 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             </span>
             <span class="sidebar-text">Locations</span>
         </a>
+        
+        <?php if (isset($_SESSION['role']) && $_SESSION['role'] !== 'STAFF'): ?>
+        <a href="settings.php" class="sidebar-link <?php echo ($currentPage == 'settings.php') ? 'active' : ''; ?>">
+            <span class="sidebar-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v6m0 6v6m8.66-12l-5.2 3M8.54 14l-5.2 3m0-12l5.2 3m5.2 3l5.2 3M1 12h6m6 0h6"/>
+                </svg>
+            </span>
+            <span class="sidebar-text">Settings</span>
+        </a>
+        <?php endif; ?>
     </nav>
     
     <div class="sidebar-footer">

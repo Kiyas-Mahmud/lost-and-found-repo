@@ -33,26 +33,26 @@ $pageTitle = 'Pending Claims';
                     </div>
                 </div>
 
-                <!-- Filters -->
+                <!-- Filters & Search -->
+                <?php
+                $filterConfig = [
+                    'searchPlaceholder' => 'Search by title or user...',
+                    'filters' => [
+                        [
+                            'id' => 'filter-type',
+                            'options' => [
+                                '' => 'All Types',
+                                'LOST' => 'Lost',
+                                'FOUND' => 'Found'
+                            ]
+                        ]
+                    ],
+                    'showDateFilter' => false
+                ];
+                include '../components/admin/filter_search.php';
+                ?>
+
                 <div class="admin-table-container">
-                    <div class="table-filters">
-                        <div class="filter-form">
-                            <div class="filter-group">
-                                <select name="type" id="filter-type" class="filter-select">
-                                    <option value="">All Types</option>
-                                    <option value="LOST">Lost</option>
-                                    <option value="FOUND">Found</option>
-                                </select>
-                                
-                                <input type="text" 
-                                       id="filter-search" 
-                                       class="filter-input" 
-                                       placeholder="Search by title or user...">
-                                
-                                <button id="clear-filters" class="btn-secondary" style="display: none;">Clear Filters</button>
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- Loading Spinner -->
                     <div class="loading-spinner" id="loading-spinner">

@@ -78,7 +78,7 @@ function checkAuth() {
  */
 function checkAdmin() {
     $session = checkAuth();
-    if ($session['role'] !== 'ADMIN') {
+    if (!in_array($session['role'], ['ADMIN', 'ADMINISTRATOR', 'MODERATOR', 'STAFF'])) {
         jsonError('Forbidden. Admin access required.', 403);
     }
     return $session;

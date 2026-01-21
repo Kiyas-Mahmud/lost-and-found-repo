@@ -48,6 +48,16 @@ $pageTitle = 'Reports';
                     </a>
                 </div>
 
+                <!-- Filters & Search -->
+                <?php
+                $filterConfig = [
+                    'searchPlaceholder' => 'Search reports...',
+                    'filters' => [],
+                    'showDateFilter' => false
+                ];
+                include '../components/admin/filter_search.php';
+                ?>
+
                 <!-- Reports Table -->
                 <div class="admin-table-container">
                     <!-- Loading Spinner -->

@@ -18,17 +18,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($_POST['action'] === 'add' && !empty($_POST['location_name'])) {
             $success = $controller->addLocation($_POST['location_name']);
             if ($success) {
-                header('Location: locations.php?msg=added');
+                set_flash('success', 'Location added successfully!');
+                header('Location: locations.php');
             } else {
-                header('Location: locations.php?msg=error&error=' . urlencode($controller->getLastError()));
+                set_flash('error', $controller->getLastError() ?: 'Failed to add location');
+                header('Location: locations.php');
+            }
+            exit();
+        } elseif ($_POST['action'] === 'edit' && !empty($_POST['location_id']) && !empty($_POST['location_name'])) {
+            $success = $controller->updateLocation($_POST['location_id'], $_POST['location_name']);
+            if ($success) {
+                set_flash('success', 'Location updated successfully!');
+                header('Location: locations.php');
+            } else {
+                set_flash('error', $controller->getLastError() ?: 'Failed to update location');
+                header('Location: locations.php');
             }
             exit();
         } elseif ($_POST['action'] === 'toggle' && !empty($_POST['location_id'])) {
             $success = $controller->toggleLocation($_POST['location_id']);
             if ($success) {
-                header('Location: locations.php?msg=updated');
+                set_flash('success', 'Location status updated successfully!');
+                header('Location: locations.php');
             } else {
-                header('Location: locations.php?msg=error&error=' . urlencode($controller->getLastError()));
+                set_flash('error', $controller->getLastError() ?: 'Failed to update location status');
+                header('Location: locations.php');
             }
             exit();
         }
@@ -54,6 +68,8 @@ $locations = $controller->getAllLocations();
             <?php include '../components/admin/header.php'; ?>
             
             <div class="admin-content">
+                <?php include '../components/common/flash_message.php'; ?>
+                
                 <!-- Page Header -->
                 <div class="page-header">
                     <div>
@@ -71,9 +87,28 @@ $locations = $controller->getAllLocations();
                     </div>
                 </div>
 
+                <!-- Filters & Search -->
+                <?php
+                $filterConfig = [
+                    'searchPlaceholder' => 'Search locations...',
+                    'filters' => [
+                        [
+                            'id' => 'filter-status',
+                            'options' => [
+                                '' => 'All Status',
+                                '1' => 'Active',
+                                '0' => 'Inactive'
+                            ]
+                        ]
+                    ],
+                    'showDateFilter' => false
+                ];
+                include '../components/admin/filter_search.php';
+                ?>
+
                 <!-- Locations Table -->
                 <div class="admin-table-container">
-                    <div class="table-wrapper">
+                    <div class="table-wrapper" id="table-wrapper">
                         <table class="admin-table">
                             <thead>
                                 <tr>
@@ -84,9 +119,9 @@ $locations = $controller->getAllLocations();
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="locations-tbody">
                                 <?php foreach ($locations as $loc): ?>
-                                    <tr>
+                                    <tr class="location-row" data-location-name="<?php echo strtolower(htmlspecialchars($loc->location_name)); ?>" data-status="<?php echo $loc->is_active ? '1' : '0'; ?>">
                                         <td><span class="text-mono">#<?php echo $loc->location_id; ?></span></td>
                                         <td>
                                             <div class="table-item-title">
@@ -106,18 +141,39 @@ $locations = $controller->getAllLocations();
                                             </div>
                                         </td>
                                         <td>
-                                            <form method="POST" style="display: inline;">
-                                                <input type="hidden" name="action" value="toggle">
-                                                <input type="hidden" name="location_id" value="<?php echo $loc->location_id; ?>">
-                                                <button type="submit" class="btn-secondary-sm">
-                                                    <?php echo $loc->is_active ? 'Deactivate' : 'Activate'; ?>
+                                            <div class="table-actions">
+                                                <button 
+                                                    type="button" 
+                                                    class="btn-secondary-sm" 
+                                                    onclick="openEditModal(<?php echo $loc->location_id; ?>, '<?php echo htmlspecialchars($loc->location_name, ENT_QUOTES); ?>')"
+                                                >
+                                                    Edit
                                                 </button>
-                                            </form>
+                                                <form method="POST" style="display: inline;">
+                                                    <input type="hidden" name="action" value="toggle">
+                                                    <input type="hidden" name="location_id" value="<?php echo $loc->location_id; ?>">
+                                                    <button type="submit" class="btn-secondary-sm">
+                                                        <?php echo $loc->is_active ? 'Deactivate' : 'Activate'; ?>
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div class="empty-state" id="empty-state" style="display: none;">
+                        <div class="empty-icon">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"/>
+                                <path d="m21 21-4.35-4.35"/>
+                            </svg>
+                        </div>
+                        <h3 class="empty-title">No Locations Found</h3>
+                        <p class="empty-text">No locations match your search criteria.</p>
                     </div>
                 </div>
             </div>
@@ -126,6 +182,147 @@ $locations = $controller->getAllLocations();
 
     <?php include '../components/modals/add_location_modal.php'; ?>
 
+    <!-- Edit Location Modal -->
+    <div id="editModal" class="modal-backdrop">
+        <div class="modal-dialog">
+            <div class="modal-content-claim">
+                <button class="modal-close-button" onclick="closeEditModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+                
+                <h2 class="modal-heading">Edit Location</h2>
+                <p class="modal-subtext">Update location information</p>
+                
+                <form method="POST">
+                    <input type="hidden" name="action" value="edit">
+                    <input type="hidden" id="edit_location_id" name="location_id">
+                    <div class="form-group">
+                        <label for="edit_location_name" class="form-label">Location Name <span class="text-danger">*</span></label>
+                        <input 
+                            type="text" 
+                            id="edit_location_name" 
+                            name="location_name" 
+                            class="form-control" 
+                            placeholder="Enter location name"
+                            required
+                        >
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Location</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="../../assets/js/main.js"></script>
+    <script>
+        // Modal functions
+        function openEditModal(locationId, locationName) {
+            document.getElementById('edit_location_id').value = locationId;
+            document.getElementById('edit_location_name').value = locationName;
+            const modal = document.getElementById('editModal');
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeEditModal() {
+            const modal = document.getElementById('editModal');
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        // Close modal on backdrop click
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditModal();
+            }
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeEditModal();
+            }
+        });
+
+    </script>
+    <script>
+        // Filter functionality
+        const searchInput = document.getElementById('filter-search');
+        const statusFilter = document.getElementById('filter-status');
+        const clearBtn = document.getElementById('clear-filters');
+        const locationRows = document.querySelectorAll('.location-row');
+
+        let searchTimeout;
+
+        // Apply filters
+        function applyFilters() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const statusValue = statusFilter.value;
+            let visibleCount = 0;
+
+            locationRows.forEach(row => {
+                const locationName = row.dataset.locationName;
+                const status = row.dataset.status;
+                
+                const matchesSearch = !searchTerm || locationName.includes(searchTerm);
+                const matchesStatus = !statusValue || status === statusValue;
+
+                if (matchesSearch && matchesStatus) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            updateEmptyState(visibleCount);
+        }
+
+        // Toggle clear button visibility
+        function toggleClearButton() {
+            const hasFilters = searchInput.value || statusFilter.value;
+            clearBtn.style.display = hasFilters ? 'inline-flex' : 'none';
+        }
+
+        // Update empty state
+        function updateEmptyState(visibleCount) {
+            const tableWrapper = document.getElementById('table-wrapper');
+            const emptyState = document.getElementById('empty-state');
+            
+            if (visibleCount === 0) {
+                tableWrapper.style.display = 'none';
+                emptyState.style.display = 'flex';
+            } else {
+                tableWrapper.style.display = 'block';
+                emptyState.style.display = 'none';
+            }
+        }
+
+        // Search with debounce
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                applyFilters();
+                toggleClearButton();
+            }, 300);
+        });
+
+        // Status filter
+        statusFilter.addEventListener('change', () => {
+            applyFilters();
+            toggleClearButton();
+        });
+
+        // Clear filters
+        clearBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            statusFilter.value = '';
+            applyFilters();
+            toggleClearButton();
+        });
+    </script>
 </body>
 </html>

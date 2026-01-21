@@ -34,37 +34,35 @@ $pageTitle = 'All Posts';
                 </div>
 
                 <!-- Filters & Search -->
+                <?php
+                $filterConfig = [
+                    'searchPlaceholder' => 'Search by title, description, or category...',
+                    'filters' => [
+                        [
+                            'id' => 'filter-type',
+                            'options' => [
+                                '' => 'All Types',
+                                'LOST' => 'Lost',
+                                'FOUND' => 'Found'
+                            ]
+                        ],
+                        [
+                            'id' => 'filter-status',
+                            'options' => [
+                                '' => 'All Status',
+                                'OPEN' => 'Open',
+                                'CLAIMED' => 'Claimed',
+                                'RETURNED' => 'Returned',
+                                'HIDDEN' => 'Hidden'
+                            ]
+                        ]
+                    ],
+                    'showDateFilter' => true
+                ];
+                include '../components/admin/filter_search.php';
+                ?>
+
                 <div class="admin-table-container">
-                    <div class="table-filters">
-                        <div class="filter-form">
-                            <div class="filter-group">
-                                <input type="text" 
-                                       id="filter-search"
-                                       class="filter-input search-input-full" 
-                                       placeholder="Search by title, description, or category...">
-                                
-                                <select id="filter-type" class="filter-select">
-                                    <option value="">All Types</option>
-                                    <option value="LOST">Lost</option>
-                                    <option value="FOUND">Found</option>
-                                </select>
-                                
-                                <select id="filter-status" class="filter-select">
-                                    <option value="">All Status</option>
-                                    <option value="OPEN">Open</option>
-                                    <option value="CLAIMED">Claimed</option>
-                                    <option value="RETURNED">Returned</option>
-                                    <option value="HIDDEN">Hidden</option>
-                                </select>
-                                
-                                <input type="date" 
-                                       id="filter-date"
-                                       class="filter-input">
-                                
-                                <button id="clear-filters" class="btn-secondary-sm" style="display: none;">Clear</button>
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- Loading Spinner -->
                     <div class="loading-spinner" id="loading-spinner">
